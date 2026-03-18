@@ -1,0 +1,60 @@
+name: Boatrace AI Daily
+on:
+  schedule:
+    # 朝セッション: 8:30〜16:30 JST (UTC -9h) = 23:30〜07:30 UTC 前日
+    # 5分間隔で実行
+    - cron: '*/5 23 * * *'    # 23:00-23:59 UTC = 08:00-08:59 JST
+    - cron: '*/5 0-7 * * *'   #  0:00-07:59 UTC = 09:00-16:59 JST
+  workflow_dispatch:
+
+env:
+  DISCORD_WEBHOOK_BOATRACE: ${{ secrets.DISCORD_WEBHOOK_BOATRACE }}
+
+jobs:
+  predict:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: Run prediction cycle
+        run: python race_day.py
+
+      - name: Commit race data
+        run: |
+          git config user.name "boatrace-bot"
+          git config user.email "bot@boatrace.ai"
+          git add data/
+          git diff --cached --quiet || git commit -m "data: $(date +%Y%m%d_%H%M) race data"
+          git push
+
+  settle:
+    runs-on: ubuntu-latest
+    if: github.event.schedule == '*/5 7 * * *'
+    needs: predict
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: Check results
+        run: python result_checker.py
+
+      - name: Commit results
+        run: |
+          git config user.name "boatrace-bot"
+          git config user.email "bot@boatrace.ai"
+          git add data/
+          git diff --cached --quiet || git commit -m "results: $(date +%Y%m%d) settlement"
+          git push

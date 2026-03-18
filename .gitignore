@@ -1,0 +1,7 @@
+__pycache__/
+*.pyc
+*.txt
+!requirements.txt
+backtest_*.json
+test_*.py
+debug_*.py
