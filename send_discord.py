@@ -5,12 +5,18 @@
 import os
 import json
 import requests
-from datetime import datetime
+from datetime import datetime, timezone
 
 
 WEBHOOK_URL = os.environ.get(
     "DISCORD_WEBHOOK_BOATRACE",
     "https://discordapp.com/api/webhooks/1483677536251674695/jPmU0dMlynu_gkfftgPX6xm-QivD8t8IwUXUBHKXyIQnUi2IPt6thitfsRk0RECgOkyp"
+)
+
+# 結果・精算・日次サマリー用 (別チャンネル)
+WEBHOOK_RESULTS = os.environ.get(
+    "DISCORD_WEBHOOK_BOATRACE_RESULTS",
+    "https://discordapp.com/api/webhooks/1483679569180360825/YIzOw3FZJ2vSMNlROmb1u9zrgW6Aa2ITrYR310uYArFxIpckgT8A1Hd1_DJ_9e0XRpEx"
 )
 
 
@@ -45,7 +51,7 @@ def send_prediction(venue: str, race_no: int, race_type: str,
                 {"name": "締切", "value": deadline, "inline": True},
             ],
             "footer": {"text": f"5点予想 | {race_type}プロファイル"},
-            "timestamp": datetime.utcnow().isoformat()
+            "timestamp": datetime.now(timezone.utc).isoformat()
         }
 
     payload = {"embeds": [embed]}
@@ -72,10 +78,10 @@ def send_result(venue: str, race_no: int, actual: str, kimarite: str,
         desc = f"**{actual}** ({kimarite}) {payout:,}円"
 
     embed = {"title": title, "description": desc, "color": color,
-             "timestamp": datetime.utcnow().isoformat()}
+             "timestamp": datetime.now(timezone.utc).isoformat()}
     payload = {"embeds": [embed]}
     try:
-        requests.post(WEBHOOK_URL, json=payload, timeout=10)
+        requests.post(WEBHOOK_RESULTS, json=payload, timeout=10)
     except Exception as e:
         print(f"[DISCORD] Error: {e}")
 
@@ -99,11 +105,11 @@ def send_daily_summary(date: str, total_races: int, hits: int,
             {"name": "ROI", "value": f"{roi:.1f}%", "inline": True},
             {"name": "収支", "value": f"**{pnl:+,}円**", "inline": False},
         ],
-        "timestamp": datetime.utcnow().isoformat()
+        "timestamp": datetime.now(timezone.utc).isoformat()
     }
     payload = {"embeds": [embed]}
     try:
-        requests.post(WEBHOOK_URL, json=payload, timeout=10)
+        requests.post(WEBHOOK_RESULTS, json=payload, timeout=10)
     except Exception as e:
         print(f"[DISCORD] Error: {e}")
 

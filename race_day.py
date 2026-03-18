@@ -2,8 +2,12 @@
 """
 ボートレース予想AI - レース当日オーケストレーター
 
-全場全レースを監視し、締切7-10分前に予想→通知を実行。
-全レースのデータを蓄積して月末バックテスト用に保存。
+方式: 締切時刻ベースのスケジューラ
+  1. 起動時に全場の全レース締切時刻を取得
+  2. 締切7分前のレースを計算してキューに入れる
+  3. 次のレースの実行時刻まで sleep
+  4. ピンポイントで予想→通知
+  5. 全レース完了まで繰り返し
 """
 import sys
 import io
@@ -28,9 +32,8 @@ from config import VENUE_MAP, BET_BASE
 DATA_DIR = Path(__file__).parent / "data"
 DATA_DIR.mkdir(exist_ok=True)
 
-NOTIFY_WINDOW_MIN = 7    # 締切の何分前から通知開始
-NOTIFY_WINDOW_MAX = 10   # 締切の何分前まで通知対象
-BUDGET_PER_RACE = 1000   # 1レースあたり予算
+NOTIFY_BEFORE_MIN = 7     # 締切の何分前に予想実行
+BUDGET_PER_RACE = 1000    # 1レースあたり予算
 
 
 # ============================================================
@@ -84,143 +87,183 @@ def save_race_data(date_str: str, race_record: dict):
 
 
 # ============================================================
-# スケジュール取得
+# スケジュール取得: 全場の締切時刻を一括取得
 # ============================================================
 
-def get_today_schedule(scraper: BoatraceScraper, date_str: str) -> list:
-    """本日開催中の場を検出"""
-    active_venues = []
+def build_schedule(scraper: BoatraceScraper, date_str: str) -> list:
+    """
+    全24場をスキャンして開催場を検出し、全レースの締切時刻を取得。
+    Returns: [(exec_time, place_no, race_no, venue, deadline_str), ...]
+             exec_time = 締切 - NOTIFY_BEFORE_MIN 分
+    """
+    schedule = []
+    today = datetime.now().date()
+
+    print(f"スケジュール取得中...")
     for place_no in range(1, 25):
         venue = VENUE_MAP.get(place_no, f"?{place_no}")
         try:
             race = scraper.scrape_full_race(place_no, 1, date_str)
-            if race and race.racers:
-                active_venues.append((place_no, venue))
-        except:
-            pass
-    return active_venues
-
-
-# ============================================================
-# メイン処理: 1回の実行サイクル
-# ============================================================
-
-def run_cycle(date_str: str = None, dry_run: bool = False):
-    """
-    1回の実行サイクル:
-    - 全開催場の全レースを確認
-    - 締切7-10分前のレースを予想+通知
-    - 全レースデータを蓄積
-    """
-    if date_str is None:
-        date_str = datetime.now().strftime("%Y%m%d")
-
-    scraper = BoatraceScraper()
-    now = datetime.now()
-    processed = 0
-    notified = 0
-
-    print(f"\n[{now.strftime('%H:%M:%S')}] サイクル開始 ({date_str})")
-
-    for place_no in range(1, 25):
-        venue = VENUE_MAP.get(place_no, f"?{place_no}")
-
-        for race_no in range(1, 13):
-            # 既にログ済みならスキップ
-            if already_logged(date_str, place_no, race_no):
+            if not race or not race.racers:
                 continue
 
-            try:
-                race = scraper.scrape_full_race(place_no, race_no, date_str)
-                if not race or not race.racers:
-                    continue
+            print(f"  {venue}: ", end="")
 
-                # 締切時刻チェック
-                deadline_str = race.deadline  # "HH:MM" 形式
+            for race_no in range(1, 13):
+                if race_no > 1:
+                    race = scraper.scrape_full_race(place_no, race_no, date_str)
+                    if not race or not race.racers:
+                        continue
+
+                deadline_str = race.deadline
                 if not deadline_str or ":" not in deadline_str:
                     continue
 
                 hh, mm = deadline_str.split(":")
-                deadline_dt = now.replace(hour=int(hh), minute=int(mm), second=0)
-                diff = (deadline_dt - now).total_seconds() / 60  # 分
+                deadline_dt = datetime.combine(today, datetime.strptime(f"{hh}:{mm}", "%H:%M").time())
+                exec_time = deadline_dt - timedelta(minutes=NOTIFY_BEFORE_MIN)
 
-                # 通知ウィンドウ外ならスキップ
-                if diff < NOTIFY_WINDOW_MIN or diff > NOTIFY_WINDOW_MAX:
-                    continue
+                schedule.append((exec_time, place_no, race_no, venue, deadline_str))
 
-                print(f"  {venue} {race_no}R (締切{deadline_str}, あと{diff:.0f}分)")
+            print(f"{len([s for s in schedule if s[1]==place_no])}R")
 
-                # オッズ取得
-                odds = scraper.scrape_odds(place_no, race_no, date_str)
-                race.trifecta_odds = odds
+        except Exception as e:
+            print(f"  {venue}: SKIP ({e})")
 
-                # 予測
-                pred = predict_race(race)
-                is_look, look_reason = should_look(pred, race)
+    # 実行時刻順にソート
+    schedule.sort(key=lambda x: x[0])
+    return schedule
 
-                # ベッティング
-                if is_look:
-                    bets_data = []
-                else:
-                    bets = allocate_portfolio(pred, budget=BUDGET_PER_RACE)
-                    bets_data = [{"combo": b.combo, "odds": b.odds,
-                                  "prob": b.prob, "amount": b.bet_amount}
-                                 for b in bets]
 
-                # レースデータ蓄積 (月末バックテスト用)
-                scores = pred["scores"]
-                sorted_scores = sorted(scores.values(), reverse=True)
-                gap = sorted_scores[0] - sorted_scores[1] if len(sorted_scores) >= 2 else 0
-                race_record = {
-                    "place_no": place_no, "venue": venue, "race_no": race_no,
-                    "deadline": deadline_str,
-                    "race_type": pred["race_type_tag"],
-                    "is_look": is_look, "look_reason": look_reason,
-                    "score_gap": round(gap, 3),
-                    "score_top": round(max(scores.values()), 3) if scores else 0,
-                    "bets": bets_data,
-                    "top5_prob": [
-                        {"combo": c, "prob": round(p, 5)}
-                        for c, p, _ in pred["top_combos"][:5]
-                    ],
-                    "racers": [
-                        {"waku": r.waku, "name": r.name, "grade": r.grade,
-                         "score": round(r.ev_score, 3),
-                         "nige": round(r.course_nigeritsu, 3),
-                         "display": round(r.tenji_time, 3)}
-                        for r in race.racers
-                    ],
-                    "timestamp": datetime.now().isoformat(),
-                }
-                save_race_data(date_str, race_record)
+# ============================================================
+# 1レースの予想実行
+# ============================================================
 
-                # ログ記録
-                log_bet(date_str, place_no, race_no, venue,
-                        pred["race_type_tag"], bets_data, is_look, look_reason)
+def process_race(scraper: BoatraceScraper, date_str: str,
+                 place_no: int, race_no: int, venue: str,
+                 deadline_str: str, dry_run: bool = False) -> bool:
+    """1レースの予想→通知→データ蓄積"""
+    if already_logged(date_str, place_no, race_no):
+        print(f"  → 既にログ済み SKIP")
+        return False
 
-                # Discord通知
-                if not dry_run:
-                    send_prediction(venue, race_no, pred["race_type_tag"],
-                                    bets_data, deadline_str,
-                                    is_look=is_look, look_reason=look_reason)
-                    time.sleep(1)  # レート制限回避
+    try:
+        # データ取得
+        race = scraper.scrape_full_race(place_no, race_no, date_str)
+        if not race or not race.racers:
+            print(f"  → データ取得失敗")
+            return False
 
-                tag = pred["race_type_tag"]
-                if is_look:
-                    print(f"    → 👀 LOOK ({look_reason})")
-                else:
-                    total = sum(b["amount"] for b in bets_data)
-                    print(f"    → 🏁 {tag} {len(bets_data)}点 {total}円")
-                    notified += 1
+        odds = scraper.scrape_odds(place_no, race_no, date_str)
+        race.trifecta_odds = odds
 
-                processed += 1
+        # 予測
+        pred = predict_race(race)
+        is_look, look_reason = should_look(pred, race)
 
-            except Exception as e:
-                print(f"  {venue} {race_no}R: ERROR {e}")
+        # ベッティング
+        if is_look:
+            bets_data = []
+        else:
+            bets = allocate_portfolio(pred, budget=BUDGET_PER_RACE)
+            bets_data = [{"combo": b.combo, "odds": b.odds,
+                          "prob": b.prob, "amount": b.bet_amount}
+                         for b in bets]
 
-    print(f"[{datetime.now().strftime('%H:%M:%S')}] サイクル完了: "
-          f"{processed}R処理 / {notified}R通知")
-    return processed
+        # データ蓄積
+        scores = pred["scores"]
+        sorted_scores = sorted(scores.values(), reverse=True)
+        gap = sorted_scores[0] - sorted_scores[1] if len(sorted_scores) >= 2 else 0
+        race_record = {
+            "place_no": place_no, "venue": venue, "race_no": race_no,
+            "deadline": deadline_str,
+            "race_type": pred["race_type_tag"],
+            "is_look": is_look, "look_reason": look_reason,
+            "score_gap": round(gap, 3),
+            "bets": bets_data,
+            "top5_prob": [{"combo": c, "prob": round(p, 5)}
+                          for c, p, _ in pred["top_combos"][:5]],
+            "racers": [{"waku": r.waku, "name": r.name, "grade": r.grade,
+                         "score": round(r.ev_score, 3)}
+                        for r in race.racers],
+            "timestamp": datetime.now().isoformat(),
+        }
+        save_race_data(date_str, race_record)
+
+        # ログ記録
+        log_bet(date_str, place_no, race_no, venue,
+                pred["race_type_tag"], bets_data, is_look, look_reason)
+
+        # Discord通知
+        tag = pred["race_type_tag"]
+        if is_look:
+            print(f"  → 👀 LOOK ({look_reason})")
+            if not dry_run:
+                send_prediction(venue, race_no, tag, bets_data,
+                                deadline_str, is_look=True,
+                                look_reason=look_reason)
+        else:
+            total = sum(b["amount"] for b in bets_data)
+            print(f"  → 🏁 [{tag}] {len(bets_data)}点 {total}円")
+            if not dry_run:
+                send_prediction(venue, race_no, tag, bets_data, deadline_str)
+
+        return True
+
+    except Exception as e:
+        print(f"  → ERROR: {e}")
+        return False
+
+
+# ============================================================
+# メイン: 締切時刻ベースのスケジューラ
+# ============================================================
+
+def run_scheduler(date_str: str = None, dry_run: bool = False):
+    if date_str is None:
+        date_str = datetime.now().strftime("%Y%m%d")
+
+    scraper = BoatraceScraper()
+
+    # Step 1: 全レースの締切時刻を取得
+    schedule = build_schedule(scraper, date_str)
+    if not schedule:
+        print("本日の開催なし")
+        return
+
+    now = datetime.now()
+    # 未来の実行のみフィルタ
+    future = [(t, p, r, v, d) for t, p, r, v, d in schedule if t > now - timedelta(minutes=3)]
+    total = len(schedule)
+    remaining = len(future)
+
+    print(f"\n{'='*55}")
+    print(f"  スケジュール: {total}R (残り{remaining}R)")
+    print(f"  最初: {future[0][3]} {future[0][2]}R ({future[0][4]})" if future else "")
+    print(f"  最後: {future[-1][3]} {future[-1][2]}R ({future[-1][4]})" if future else "")
+    print(f"{'='*55}\n")
+
+    processed = 0
+    for exec_time, place_no, race_no, venue, deadline_str in future:
+        now = datetime.now()
+        wait_sec = (exec_time - now).total_seconds()
+
+        if wait_sec > 0:
+            print(f"⏳ 次: {venue} {race_no}R (締切{deadline_str}) "
+                  f"→ {exec_time.strftime('%H:%M')}に実行 "
+                  f"(あと{wait_sec/60:.0f}分)")
+            time.sleep(max(0, wait_sec))
+
+        print(f"\n🏁 {venue} {race_no}R (締切{deadline_str})")
+        ok = process_race(scraper, date_str, place_no, race_no,
+                          venue, deadline_str, dry_run)
+        if ok:
+            processed += 1
+        time.sleep(2)  # レート制限
+
+    print(f"\n{'='*55}")
+    print(f"  完了: {processed}R処理")
+    print(f"{'='*55}")
 
 
 # ============================================================
@@ -232,16 +275,5 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("--date", default=None, help="日付 (yyyymmdd)")
     parser.add_argument("--dry-run", action="store_true", help="Discord通知しない")
-    parser.add_argument("--loop", action="store_true", help="5分間隔ループ")
     args = parser.parse_args()
-
-    date_str = args.date or datetime.now().strftime("%Y%m%d")
-
-    if args.loop:
-        print(f"ループモード開始 ({date_str})")
-        while True:
-            run_cycle(date_str, dry_run=args.dry_run)
-            print("  … 5分待機")
-            time.sleep(300)
-    else:
-        run_cycle(date_str, dry_run=args.dry_run)
+    run_scheduler(args.date, args.dry_run)
