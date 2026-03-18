@@ -220,7 +220,7 @@ def process_race(scraper: BoatraceScraper, date_str: str,
 # ============================================================
 
 def run_scheduler(date_str: str = None, dry_run: bool = False,
-                  until: str = None):
+                  until: str = None, from_time: str = None):
     if date_str is None:
         date_str = datetime.now().strftime("%Y%m%d")
 
@@ -235,16 +235,22 @@ def run_scheduler(date_str: str = None, dry_run: bool = False,
     now = datetime.now()
     today = now.date()
 
-    # --until で終了時刻を制限
+    # --from / --until で時間範囲を制限
+    from_dt = None
     until_dt = None
+    if from_time:
+        hh, mm = from_time.split(":")
+        from_dt = datetime.combine(today, datetime.strptime(f"{hh}:{mm}", "%H:%M").time())
     if until:
         hh, mm = until.split(":")
         until_dt = datetime.combine(today, datetime.strptime(f"{hh}:{mm}", "%H:%M").time())
 
-    # 未来の実行のみフィルタ + until制限
+    # フィルタ: 過去除外 + 時間範囲
     future = []
     for t, p, r, v, d in schedule:
         if t < now - timedelta(minutes=3):
+            continue
+        if from_dt and t < from_dt:
             continue
         if until_dt and t > until_dt:
             continue
@@ -255,8 +261,10 @@ def run_scheduler(date_str: str = None, dry_run: bool = False,
 
     print(f"\n{'='*55}")
     print(f"  スケジュール: {total}R (今回対象{remaining}R)")
+    if from_time:
+        print(f"  開始: {from_time}")
     if until:
-        print(f"  終了時刻: {until}")
+        print(f"  終了: {until}")
     print(f"  最初: {future[0][3]} {future[0][2]}R ({future[0][4]})" if future else "")
     print(f"  最後: {future[-1][3]} {future[-1][2]}R ({future[-1][4]})" if future else "")
     print(f"{'='*55}\n")
@@ -294,5 +302,6 @@ if __name__ == "__main__":
     parser.add_argument("--date", default=None, help="日付 (yyyymmdd)")
     parser.add_argument("--dry-run", action="store_true", help="Discord通知しない")
     parser.add_argument("--until", default=None, help="終了時刻 (HH:MM)")
+    parser.add_argument("--from", dest="from_time", default=None, help="開始時刻 (HH:MM)")
     args = parser.parse_args()
-    run_scheduler(args.date, args.dry_run, args.until)
+    run_scheduler(args.date, args.dry_run, args.until, args.from_time)

@@ -1,8 +1,7 @@
 name: Boatrace Afternoon
 on:
   schedule:
-    # 13:30 JST = 04:30 UTC
-    - cron: '30 4 * * *'
+    - cron: '20 4 * * *'    # 04:20 UTC = 13:20 JST
   workflow_dispatch:
 
 env:
@@ -12,15 +11,16 @@ env:
 jobs:
   afternoon:
     runs-on: ubuntu-latest
-    timeout-minutes: 240  # 4時間 (13:30-17:30)
+    timeout-minutes: 300   # 5時間 (13:20-17:30)
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
         with:
           python-version: '3.11'
       - run: pip install -r requirements.txt
-      - name: Run afternoon session
-        run: python race_day.py --until 17:30
+      - run: |
+          git pull
+          python race_day.py --from 13:00
       - name: Commit data
         run: |
           git config user.name "boatrace-bot"
@@ -40,9 +40,9 @@ jobs:
         with:
           python-version: '3.11'
       - run: pip install -r requirements.txt
-      - run: git pull
-      - name: Check results
-        run: python result_checker.py
+      - run: |
+          git pull
+          python result_checker.py
       - name: Commit results
         run: |
           git config user.name "boatrace-bot"

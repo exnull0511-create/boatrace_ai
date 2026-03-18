@@ -1,8 +1,7 @@
 name: Boatrace Morning
 on:
   schedule:
-    # 8:30 JST = 23:30 UTC (前日)
-    - cron: '30 23 * * *'
+    - cron: '50 22 * * *'   # 22:50 UTC = 07:50 JST
   workflow_dispatch:
 
 env:
@@ -12,15 +11,14 @@ env:
 jobs:
   morning:
     runs-on: ubuntu-latest
-    timeout-minutes: 300  # 5時間 (8:30-13:30)
+    timeout-minutes: 330   # 5.5時間 (8:00-13:30)
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
         with:
           python-version: '3.11'
       - run: pip install -r requirements.txt
-      - name: Run morning session
-        run: python race_day.py --until 13:30
+      - run: python race_day.py --until 13:30
       - name: Commit data
         run: |
           git config user.name "boatrace-bot"
