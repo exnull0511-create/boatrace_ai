@@ -1,8 +1,8 @@
-name: Boatrace AI Daily
+name: Boatrace Afternoon
 on:
   schedule:
-    # 朝8時(JST)に1日1回起動。race_day.pyが締切時刻まで自動待機。
-    - cron: '0 23 * * *'   # 23:00 UTC = 08:00 JST
+    # 13:30 JST = 04:30 UTC
+    - cron: '30 4 * * *'
   workflow_dispatch:
 
 env:
@@ -10,51 +10,39 @@ env:
   DISCORD_WEBHOOK_BOATRACE_RESULTS: ${{ secrets.DISCORD_WEBHOOK_BOATRACE_RESULTS }}
 
 jobs:
-  predict:
+  afternoon:
     runs-on: ubuntu-latest
-    timeout-minutes: 600   # 10時間 (8:00-17:00のレースをカバー)
+    timeout-minutes: 240  # 4時間 (13:30-17:30)
     steps:
       - uses: actions/checkout@v4
-
       - uses: actions/setup-python@v5
         with:
           python-version: '3.11'
-
-      - name: Install dependencies
-        run: pip install -r requirements.txt
-
-      - name: Run scheduler
-        run: python race_day.py
-
-      - name: Commit race data
+      - run: pip install -r requirements.txt
+      - name: Run afternoon session
+        run: python race_day.py --until 17:30
+      - name: Commit data
         run: |
           git config user.name "boatrace-bot"
           git config user.email "bot@boatrace.ai"
           git add data/
-          git diff --cached --quiet || git commit -m "data: $(date +%Y%m%d) race data"
+          git diff --cached --quiet || git commit -m "data: $(date +%Y%m%d) afternoon"
           git push
 
   settle:
     runs-on: ubuntu-latest
-    needs: predict
+    needs: afternoon
     steps:
       - uses: actions/checkout@v4
         with:
           ref: master
-
       - uses: actions/setup-python@v5
         with:
           python-version: '3.11'
-
-      - name: Install dependencies
-        run: pip install -r requirements.txt
-
-      - name: Pull latest data
-        run: git pull
-
+      - run: pip install -r requirements.txt
+      - run: git pull
       - name: Check results
         run: python result_checker.py
-
       - name: Commit results
         run: |
           git config user.name "boatrace-bot"

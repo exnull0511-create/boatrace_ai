@@ -219,7 +219,8 @@ def process_race(scraper: BoatraceScraper, date_str: str,
 # メイン: 締切時刻ベースのスケジューラ
 # ============================================================
 
-def run_scheduler(date_str: str = None, dry_run: bool = False):
+def run_scheduler(date_str: str = None, dry_run: bool = False,
+                  until: str = None):
     if date_str is None:
         date_str = datetime.now().strftime("%Y%m%d")
 
@@ -232,13 +233,30 @@ def run_scheduler(date_str: str = None, dry_run: bool = False):
         return
 
     now = datetime.now()
-    # 未来の実行のみフィルタ
-    future = [(t, p, r, v, d) for t, p, r, v, d in schedule if t > now - timedelta(minutes=3)]
+    today = now.date()
+
+    # --until で終了時刻を制限
+    until_dt = None
+    if until:
+        hh, mm = until.split(":")
+        until_dt = datetime.combine(today, datetime.strptime(f"{hh}:{mm}", "%H:%M").time())
+
+    # 未来の実行のみフィルタ + until制限
+    future = []
+    for t, p, r, v, d in schedule:
+        if t < now - timedelta(minutes=3):
+            continue
+        if until_dt and t > until_dt:
+            continue
+        future.append((t, p, r, v, d))
+
     total = len(schedule)
     remaining = len(future)
 
     print(f"\n{'='*55}")
-    print(f"  スケジュール: {total}R (残り{remaining}R)")
+    print(f"  スケジュール: {total}R (今回対象{remaining}R)")
+    if until:
+        print(f"  終了時刻: {until}")
     print(f"  最初: {future[0][3]} {future[0][2]}R ({future[0][4]})" if future else "")
     print(f"  最後: {future[-1][3]} {future[-1][2]}R ({future[-1][4]})" if future else "")
     print(f"{'='*55}\n")
@@ -275,5 +293,6 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("--date", default=None, help="日付 (yyyymmdd)")
     parser.add_argument("--dry-run", action="store_true", help="Discord通知しない")
+    parser.add_argument("--until", default=None, help="終了時刻 (HH:MM)")
     args = parser.parse_args()
-    run_scheduler(args.date, args.dry_run)
+    run_scheduler(args.date, args.dry_run, args.until)

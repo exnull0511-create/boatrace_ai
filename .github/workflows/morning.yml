@@ -1,0 +1,30 @@
+name: Boatrace Morning
+on:
+  schedule:
+    # 8:30 JST = 23:30 UTC (前日)
+    - cron: '30 23 * * *'
+  workflow_dispatch:
+
+env:
+  DISCORD_WEBHOOK_BOATRACE: ${{ secrets.DISCORD_WEBHOOK_BOATRACE }}
+  DISCORD_WEBHOOK_BOATRACE_RESULTS: ${{ secrets.DISCORD_WEBHOOK_BOATRACE_RESULTS }}
+
+jobs:
+  morning:
+    runs-on: ubuntu-latest
+    timeout-minutes: 300  # 5時間 (8:30-13:30)
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - run: pip install -r requirements.txt
+      - name: Run morning session
+        run: python race_day.py --until 13:30
+      - name: Commit data
+        run: |
+          git config user.name "boatrace-bot"
+          git config user.email "bot@boatrace.ai"
+          git add data/
+          git diff --cached --quiet || git commit -m "data: $(date +%Y%m%d) morning"
+          git push
