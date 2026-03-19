@@ -4,6 +4,9 @@ on:
     - cron: '50 22 * * *'   # 22:50 UTC = 07:50 JST
   workflow_dispatch:
 
+permissions:
+  contents: write
+
 env:
   DISCORD_WEBHOOK_BOATRACE: ${{ secrets.DISCORD_WEBHOOK_BOATRACE }}
   DISCORD_WEBHOOK_BOATRACE_RESULTS: ${{ secrets.DISCORD_WEBHOOK_BOATRACE_RESULTS }}

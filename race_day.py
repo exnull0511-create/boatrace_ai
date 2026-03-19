@@ -4,10 +4,9 @@
 
 方式: 締切時刻ベースのスケジューラ
   1. 起動時に全場の全レース締切時刻を取得
-  2. 締切7分前のレースを計算してキューに入れる
-  3. 次のレースの実行時刻まで sleep
-  4. ピンポイントで予想→通知
-  5. 全レース完了まで繰り返し
+  2. --from / --until で実行範囲を指定可能
+  3. 締切7分前のレースを順に処理 (sleepで待機)
+  4. 完了後に終了
 """
 import sys
 import io
@@ -33,7 +32,7 @@ DATA_DIR = Path(__file__).parent / "data"
 DATA_DIR.mkdir(exist_ok=True)
 
 NOTIFY_BEFORE_MIN = 7     # 締切の何分前に予想実行
-BUDGET_PER_RACE = 1000    # 1レースあたり予算
+BUDGET_PER_RACE = 1000
 
 
 # ============================================================
@@ -87,27 +86,40 @@ def save_race_data(date_str: str, race_record: dict):
 
 
 # ============================================================
-# スケジュール取得: 全場の締切時刻を一括取得
+# スケジュール取得
 # ============================================================
 
-def build_schedule(scraper: BoatraceScraper, date_str: str) -> list:
+def build_schedule(scraper: BoatraceScraper, date_str: str,
+                   from_time: str = None, until_time: str = None) -> list:
     """
-    全24場をスキャンして開催場を検出し、全レースの締切時刻を取得。
-    Returns: [(exec_time, place_no, race_no, venue, deadline_str), ...]
-             exec_time = 締切 - NOTIFY_BEFORE_MIN 分
+    全場の全レース締切時刻を取得してキューを作る。
+
+    Args:
+        from_time:  "HH:MM" - この時刻以降のレースのみ
+        until_time: "HH:MM" - この時刻以前のレースのみ
     """
     schedule = []
     today = datetime.now().date()
 
+    # 時刻範囲
+    from_dt = None
+    until_dt = None
+    if from_time:
+        h, m = from_time.split(":")
+        from_dt = datetime.combine(today, datetime.strptime(f"{h}:{m}", "%H:%M").time())
+    if until_time:
+        h, m = until_time.split(":")
+        until_dt = datetime.combine(today, datetime.strptime(f"{h}:{m}", "%H:%M").time())
+
     print(f"スケジュール取得中...")
     for place_no in range(1, 25):
         venue = VENUE_MAP.get(place_no, f"?{place_no}")
+        venue_count = 0
         try:
+            # まず1Rで開催有無チェック
             race = scraper.scrape_full_race(place_no, 1, date_str)
             if not race or not race.racers:
                 continue
-
-            print(f"  {venue}: ", end="")
 
             for race_no in range(1, 13):
                 if race_no > 1:
@@ -120,17 +132,25 @@ def build_schedule(scraper: BoatraceScraper, date_str: str) -> list:
                     continue
 
                 hh, mm = deadline_str.split(":")
-                deadline_dt = datetime.combine(today, datetime.strptime(f"{hh}:{mm}", "%H:%M").time())
+                deadline_dt = datetime.combine(
+                    today, datetime.strptime(f"{hh}:{mm}", "%H:%M").time())
                 exec_time = deadline_dt - timedelta(minutes=NOTIFY_BEFORE_MIN)
 
-                schedule.append((exec_time, place_no, race_no, venue, deadline_str))
+                # 範囲フィルタ
+                if from_dt and deadline_dt < from_dt:
+                    continue
+                if until_dt and deadline_dt > until_dt:
+                    continue
 
-            print(f"{len([s for s in schedule if s[1]==place_no])}R")
+                schedule.append((exec_time, place_no, race_no, venue, deadline_str))
+                venue_count += 1
+
+            if venue_count > 0:
+                print(f"  {venue}: {venue_count}R")
 
         except Exception as e:
             print(f"  {venue}: SKIP ({e})")
 
-    # 実行時刻順にソート
     schedule.sort(key=lambda x: x[0])
     return schedule
 
@@ -142,13 +162,11 @@ def build_schedule(scraper: BoatraceScraper, date_str: str) -> list:
 def process_race(scraper: BoatraceScraper, date_str: str,
                  place_no: int, race_no: int, venue: str,
                  deadline_str: str, dry_run: bool = False) -> bool:
-    """1レースの予想→通知→データ蓄積"""
     if already_logged(date_str, place_no, race_no):
         print(f"  → 既にログ済み SKIP")
         return False
 
     try:
-        # データ取得
         race = scraper.scrape_full_race(place_no, race_no, date_str)
         if not race or not race.racers:
             print(f"  → データ取得失敗")
@@ -157,11 +175,9 @@ def process_race(scraper: BoatraceScraper, date_str: str,
         odds = scraper.scrape_odds(place_no, race_no, date_str)
         race.trifecta_odds = odds
 
-        # 予測
         pred = predict_race(race)
         is_look, look_reason = should_look(pred, race)
 
-        # ベッティング
         if is_look:
             bets_data = []
         else:
@@ -190,11 +206,9 @@ def process_race(scraper: BoatraceScraper, date_str: str,
         }
         save_race_data(date_str, race_record)
 
-        # ログ記録
         log_bet(date_str, place_no, race_no, venue,
                 pred["race_type_tag"], bets_data, is_look, look_reason)
 
-        # Discord通知
         tag = pred["race_type_tag"]
         if is_look:
             print(f"  → 👀 LOOK ({look_reason})")
@@ -220,53 +234,31 @@ def process_race(scraper: BoatraceScraper, date_str: str,
 # ============================================================
 
 def run_scheduler(date_str: str = None, dry_run: bool = False,
-                  until: str = None, from_time: str = None):
+                  from_time: str = None, until_time: str = None):
     if date_str is None:
         date_str = datetime.now().strftime("%Y%m%d")
 
     scraper = BoatraceScraper()
 
-    # Step 1: 全レースの締切時刻を取得
-    schedule = build_schedule(scraper, date_str)
+    schedule = build_schedule(scraper, date_str, from_time, until_time)
     if not schedule:
-        print("本日の開催なし")
+        print("対象レースなし")
         return
 
     now = datetime.now()
-    today = now.date()
-
-    # --from / --until で時間範囲を制限
-    from_dt = None
-    until_dt = None
-    if from_time:
-        hh, mm = from_time.split(":")
-        from_dt = datetime.combine(today, datetime.strptime(f"{hh}:{mm}", "%H:%M").time())
-    if until:
-        hh, mm = until.split(":")
-        until_dt = datetime.combine(today, datetime.strptime(f"{hh}:{mm}", "%H:%M").time())
-
-    # フィルタ: 過去除外 + 時間範囲
-    future = []
-    for t, p, r, v, d in schedule:
-        if t < now - timedelta(minutes=3):
-            continue
-        if from_dt and t < from_dt:
-            continue
-        if until_dt and t > until_dt:
-            continue
-        future.append((t, p, r, v, d))
-
-    total = len(schedule)
-    remaining = len(future)
+    future = [(t, p, r, v, d) for t, p, r, v, d in schedule
+              if t > now - timedelta(minutes=3)]
+    past_count = len(schedule) - len(future)
 
     print(f"\n{'='*55}")
-    print(f"  スケジュール: {total}R (今回対象{remaining}R)")
+    print(f"  スケジュール: {len(schedule)}R (未処理{len(future)}R, 済{past_count}R)")
     if from_time:
-        print(f"  開始: {from_time}")
-    if until:
-        print(f"  終了: {until}")
-    print(f"  最初: {future[0][3]} {future[0][2]}R ({future[0][4]})" if future else "")
-    print(f"  最後: {future[-1][3]} {future[-1][2]}R ({future[-1][4]})" if future else "")
+        print(f"  開始: {from_time}以降")
+    if until_time:
+        print(f"  終了: {until_time}まで")
+    if future:
+        print(f"  最初: {future[0][3]} {future[0][2]}R (締切{future[0][4]})")
+        print(f"  最後: {future[-1][3]} {future[-1][2]}R (締切{future[-1][4]})")
     print(f"{'='*55}\n")
 
     processed = 0
@@ -285,23 +277,21 @@ def run_scheduler(date_str: str = None, dry_run: bool = False,
                           venue, deadline_str, dry_run)
         if ok:
             processed += 1
-        time.sleep(2)  # レート制限
+        time.sleep(2)
 
     print(f"\n{'='*55}")
     print(f"  完了: {processed}R処理")
     print(f"{'='*55}")
 
 
-# ============================================================
-# エントリーポイント
-# ============================================================
-
 if __name__ == "__main__":
     import argparse
     parser = argparse.ArgumentParser()
     parser.add_argument("--date", default=None, help="日付 (yyyymmdd)")
     parser.add_argument("--dry-run", action="store_true", help="Discord通知しない")
-    parser.add_argument("--until", default=None, help="終了時刻 (HH:MM)")
-    parser.add_argument("--from", dest="from_time", default=None, help="開始時刻 (HH:MM)")
+    parser.add_argument("--from", dest="from_time", default=None,
+                        help="開始時刻 (HH:MM) 例: 13:00")
+    parser.add_argument("--until", default=None,
+                        help="終了時刻 (HH:MM) 例: 13:30")
     args = parser.parse_args()
-    run_scheduler(args.date, args.dry_run, args.until, args.from_time)
+    run_scheduler(args.date, args.dry_run, args.from_time, args.until)
