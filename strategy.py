@@ -135,6 +135,134 @@ def should_look(prediction: dict, race: Race) -> Tuple[bool, str]:
 
 
 # ============================================================
+# 中穴EV狙いフィルター (v5)
+# ============================================================
+
+# 中穴オッズ帯 (倍率)
+CHUUANA_ODDS_MIN = 20.0     # 20倍
+CHUUANA_ODDS_MAX = 1000.0   # 1000倍 (中穴〜大穴)
+CHUUANA_EV_MIN = 1.0        # 最低EV閾値
+CHUUANA_BEST_EV_MIN = 1.2   # レース選定: 最大EV閾値
+CHUUANA_MAX_EV_COMBOS = 12  # EV>1の組がこれ以上 → 散漫で除外
+CHUUANA_MAX_BETS = 5        # 買い目上限
+CHUUANA_BUDGET = 1000       # 1R合計予算
+
+
+def chuuana_filter(prediction: dict, race: Race) -> tuple:
+    """
+    中穴EV狙いフィルター: 市場が過小評価している中穴組が存在するレースを選出
+
+    条件 (全てAND):
+      1. ガチガチ除外 (赤オッズにしかならない)
+      2. 中穴帯(20〜100倍)にEV>1.0の組が存在する
+      3. 中穴帯の最大EV ≥ 1.2 (市場との乖離が十分)
+      4. EV>1.0の中穴組が8組未満 (多すぎ=読めない混戦)
+
+    Returns:
+        (passed, best_ev, chuuana_combos, reason)
+        chuuana_combos: BetCandidate のリスト (EV降順, 最大5組, EV配分済み)
+    """
+    tag = prediction["race_type_tag"]
+    evs = prediction.get("evs", {})
+    probs = prediction.get("probs", {})
+    odds = race.trifecta_odds if race.trifecta_odds else {}
+
+    # 条件1: ガチガチ除外
+    if tag == "ガチガチ":
+        return False, 0.0, [], "ガチガチ(赤オッズのみ)"
+
+    # 中穴帯のEV>1.0組を抽出
+    chuuana_hits = []
+    for combo, ev in evs.items():
+        odds_val = odds.get(combo, 0)
+        odds_bai = odds_val / 100.0 if odds_val > 0 else 0
+        prob = probs.get(combo, 0)
+
+        if CHUUANA_ODDS_MIN <= odds_bai <= CHUUANA_ODDS_MAX and ev >= CHUUANA_EV_MIN:
+            chuuana_hits.append(BetCandidate(
+                combo=combo, prob=prob, odds=odds_val,
+                ev=ev, bet_amount=100  # 仮
+            ))
+
+    # 条件2: 中穴EV組が存在するか
+    if not chuuana_hits:
+        return False, 0.0, [], "中穴帯にEV>1.0なし"
+
+    # 条件3: 最大EV >= 1.2
+    best_ev = max(c.ev for c in chuuana_hits)
+    if best_ev < CHUUANA_BEST_EV_MIN:
+        return False, 0.0, [], f"最大EV={best_ev:.2f}<{CHUUANA_BEST_EV_MIN}"
+
+    # 条件4: EV>1.0組が多すぎないか (散漫=読めない)
+    if len(chuuana_hits) > CHUUANA_MAX_EV_COMBOS:
+        return False, 0.0, [], f"EV>1中穴{len(chuuana_hits)}組(散漫)"
+
+    # EV降順でTop5を選出
+    chuuana_hits.sort(key=lambda x: x.ev, reverse=True)
+    selected = chuuana_hits[:CHUUANA_MAX_BETS]
+
+    # EV比率で配分 (合計1000円, 最低100円, 100円単位)
+    selected = _allocate_by_ev(selected, CHUUANA_BUDGET)
+
+    return True, best_ev, selected, ""
+
+
+def _allocate_by_ev(combos: List[BetCandidate], budget: int) -> List[BetCandidate]:
+    """
+    EV比率で予算配分: EVが高い組に厚張り
+
+    - 合計 budget 円以内
+    - 最低100円/組
+    - 100円単位で丸め
+    - EV比率で残り予算を配分
+    - 余りはEV上位から100円ずつ追加
+    """
+    n = len(combos)
+    if n == 0:
+        return combos
+
+    # 全組に最低100円を確保
+    base = 100
+    remaining = budget - base * n
+
+    if remaining <= 0:
+        for c in combos:
+            c.bet_amount = base
+        return combos
+
+    # EV比率で残りを配分 (切り捨て)
+    total_ev = sum(c.ev for c in combos)
+    for c in combos:
+        extra = int((c.ev / total_ev) * remaining / 100) * 100
+        c.bet_amount = base + extra
+
+    # 余りをEV上位から100円ずつ追加
+    total = sum(c.bet_amount for c in combos)
+    leftover = budget - total
+    i = 0
+    while leftover >= 100 and i < n:
+        combos[i].bet_amount += 100
+        leftover -= 100
+        i += 1
+
+    return combos
+
+
+def select_chuuana_bets(prediction: dict, race: Race) -> List[BetCandidate]:
+    """
+    中穴EV狙い買い目選定 (chuuana_filter通過後に使用)
+
+    Returns:
+        List[BetCandidate] - EV上位の中穴組 (最大5点, EV配分, 合計1000円)
+    """
+    passed, best_ev, combos, reason = chuuana_filter(prediction, race)
+    if not passed:
+        return []
+    return combos
+
+
+
+# ============================================================
 # ポートフォリオ配分
 # ============================================================
 

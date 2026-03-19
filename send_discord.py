@@ -22,7 +22,7 @@ WEBHOOK_RESULTS = os.environ.get(
 
 def send_prediction(venue: str, race_no: int, race_type: str,
                     bets: list, deadline: str, is_look: bool = False,
-                    look_reason: str = ""):
+                    look_reason: str = "", gensen: bool = False):
     """予想通知をDiscordに送信"""
     if is_look:
         color = 0x808080  # グレー
@@ -33,24 +33,34 @@ def send_prediction(venue: str, race_no: int, race_type: str,
             "footer": {"text": f"締切 {deadline} | {race_type}"}
         }
     else:
-        color_map = {"通常": 0x3498db, "混戦": 0xe74c3c, "本命崩れ": 0xf39c12}
-        color = color_map.get(race_type, 0x2ecc71)
-        title = f"🏁 {venue} {race_no}R [{race_type}]"
+        if gensen:
+            color = 0xf1c40f  # ゴールド
+            title = f"🎯 {venue} {race_no}R [{race_type}]"
+        else:
+            color_map = {"通常": 0x3498db, "混戦": 0xe74c3c, "本命崩れ": 0xf39c12}
+            color = color_map.get(race_type, 0x2ecc71)
+            title = f"🏁 {venue} {race_no}R [{race_type}]"
 
         lines = []
         total_bet = 0
         for b in bets:
-            lines.append(f"`{b['combo']}` {b['odds']:.1f}倍 → {b['amount']}円")
+            odds_bai = b['odds'] / 100
+            ev_str = f" EV={b['ev']:.2f}" if 'ev' in b else ""
+            lines.append(f"`{b['combo']}` **{odds_bai:.0f}倍**{ev_str} → {b['amount']}円")
             total_bet += b['amount']
 
         desc = "\n".join(lines)
+        if gensen:
+            footer_text = "🎯 中穴EV狙い | 少点数集中"
+        else:
+            footer_text = f"5点予想 | {race_type}プロファイル"
         embed = {
             "title": title, "description": desc, "color": color,
             "fields": [
                 {"name": "投資額", "value": f"{total_bet:,}円", "inline": True},
                 {"name": "締切", "value": deadline, "inline": True},
             ],
-            "footer": {"text": f"5点予想 | {race_type}プロファイル"},
+            "footer": {"text": footer_text},
             "timestamp": datetime.now(timezone.utc).isoformat()
         }
 

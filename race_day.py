@@ -20,8 +20,10 @@ from pathlib import Path
 sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8')
 
 from scraper import BoatraceScraper
-from engine import predict_race
-from strategy import allocate_portfolio, should_look
+from engine_v6 import (predict_race_v6, should_look_v6,
+                       select_ev_top_bets, V6_BUDGET,
+                       LOOK_TENKAI_MIN, LOOK_AGREE_MIN)
+from strategy import allocate_portfolio, CHUUANA_BUDGET
 from send_discord import send_prediction, send_daily_summary
 from config import VENUE_MAP, BET_BASE
 
@@ -33,6 +35,9 @@ DATA_DIR.mkdir(exist_ok=True)
 
 NOTIFY_BEFORE_MIN = 7     # 締切の何分前に予想実行
 BUDGET_PER_RACE = 1000
+
+# 中穴EV狙いモード設定
+GENSEN_MAX_RACES = 5      # 厳選時の最大レース数
 
 
 # ============================================================
@@ -161,7 +166,8 @@ def build_schedule(scraper: BoatraceScraper, date_str: str,
 
 def process_race(scraper: BoatraceScraper, date_str: str,
                  place_no: int, race_no: int, venue: str,
-                 deadline_str: str, dry_run: bool = False) -> bool:
+                 deadline_str: str, dry_run: bool = False,
+                 gensen: bool = False) -> bool:
     if already_logged(date_str, place_no, race_no):
         print(f"  → 既にログ済み SKIP")
         return False
@@ -175,18 +181,35 @@ def process_race(scraper: BoatraceScraper, date_str: str,
         odds = scraper.scrape_odds(place_no, race_no, date_str)
         race.trifecta_odds = odds
 
-        pred = predict_race(race)
-        is_look, look_reason = should_look(pred, race)
+        # v6ハイブリッド予測
+        pred = predict_race_v6(race)
+        is_look, look_reason = should_look_v6(pred, race)
 
-        if is_look:
+        if gensen:
+            # v6 EV Top5 買い目
+            if not is_look:
+                v6_bets = select_ev_top_bets(pred, race)
+                if v6_bets:
+                    bets_data = [{"combo": b.combo, "odds": b.odds,
+                                  "prob": b.prob, "ev": round(b.ev, 4),
+                                  "amount": b.bet_amount}
+                                 for b in v6_bets]
+                else:
+                    bets_data = []
+                    is_look = True
+                    look_reason = "EV買い目なし"
+            else:
+                bets_data = []
+        elif is_look:
             bets_data = []
         else:
-            bets = allocate_portfolio(pred, budget=BUDGET_PER_RACE)
+            v6_bets = select_ev_top_bets(pred, race)
             bets_data = [{"combo": b.combo, "odds": b.odds,
-                          "prob": b.prob, "amount": b.bet_amount}
-                         for b in bets]
+                          "prob": b.prob, "ev": round(b.ev, 4),
+                          "amount": b.bet_amount}
+                         for b in v6_bets]
 
-        # データ蓄積
+        # データ蓄積 (v6メタデータ含む)
         scores = pred["scores"]
         sorted_scores = sorted(scores.values(), reverse=True)
         gap = sorted_scores[0] - sorted_scores[1] if len(sorted_scores) >= 2 else 0
@@ -196,6 +219,8 @@ def process_race(scraper: BoatraceScraper, date_str: str,
             "race_type": pred["race_type_tag"],
             "is_look": is_look, "look_reason": look_reason,
             "score_gap": round(gap, 3),
+            "tenkai_max": round(pred.get("tenkai_max", 0), 3),
+            "agreement": round(pred.get("agreement", 0), 3),
             "bets": bets_data,
             "top5_prob": [{"combo": c, "prob": round(p, 5)}
                           for c, p, _ in pred["top_combos"][:5]],
@@ -210,6 +235,8 @@ def process_race(scraper: BoatraceScraper, date_str: str,
                 pred["race_type_tag"], bets_data, is_look, look_reason)
 
         tag = pred["race_type_tag"]
+        tk = pred.get("tenkai_max", 0)
+        ag = pred.get("agreement", 0)
         if is_look:
             print(f"  → 👀 LOOK ({look_reason})")
             if not dry_run:
@@ -218,15 +245,172 @@ def process_race(scraper: BoatraceScraper, date_str: str,
                                 look_reason=look_reason)
         else:
             total = sum(b["amount"] for b in bets_data)
-            print(f"  → 🏁 [{tag}] {len(bets_data)}点 {total}円")
+            badge = "🎯" if gensen else "🏁"
+            print(f"  → {badge} [{tag}] {len(bets_data)}点 {total}円 "
+                  f"tk={tk:.2f} ag={ag:.2f}")
             if not dry_run:
-                send_prediction(venue, race_no, tag, bets_data, deadline_str)
+                send_prediction(venue, race_no, tag, bets_data,
+                                deadline_str, gensen=gensen)
 
         return True
 
     except Exception as e:
         print(f"  → ERROR: {e}")
         return False
+
+
+# ============================================================
+# 厳選モード: 2パス方式
+# ============================================================
+
+def run_gensen_mode(date_str: str = None, dry_run: bool = False,
+                    from_time: str = None, until_time: str = None):
+    """
+    厳選モード: 全レースをスキャンし、フィルター通過の上位N件のみに集中投資。
+
+    Pass 1: 全レースの予測を実行 → 厳選フィルターで候補を絞る
+    Pass 2: 候補を優先度順にソート → 上位5Rの締切を待って順に実行
+    """
+    if date_str is None:
+        date_str = datetime.now().strftime("%Y%m%d")
+
+    scraper = BoatraceScraper()
+    today = datetime.now().date()
+
+    # 時刻範囲
+    from_dt = None
+    until_dt = None
+    if from_time:
+        h, m = from_time.split(":")
+        from_dt = datetime.combine(today, datetime.strptime(f"{h}:{m}", "%H:%M").time())
+    if until_time:
+        h, m = until_time.split(":")
+        until_dt = datetime.combine(today, datetime.strptime(f"{h}:{m}", "%H:%M").time())
+
+    # === Pass 1: 全レーススキャン ===
+    print(f"\n{'='*55}")
+    print(f"  🎯 厳選モード: 全場スキャン中...")
+    print(f"{'='*55}")
+
+    candidates = []  # (priority, place_no, race_no, venue, deadline_str, deadline_dt)
+    scanned = 0
+    skipped_reasons = {}
+
+    for place_no in range(1, 25):
+        venue = VENUE_MAP.get(place_no, f"?{place_no}")
+        try:
+            test_race = scraper.scrape_full_race(place_no, 1, date_str)
+            if not test_race or not test_race.racers:
+                continue
+
+            venue_count = 0
+            for race_no in range(1, 13):
+                if race_no == 1:
+                    race = test_race
+                else:
+                    race = scraper.scrape_full_race(place_no, race_no, date_str)
+                    if not race or not race.racers:
+                        continue
+
+                # 締切チェック
+                deadline_str = race.deadline
+                if not deadline_str or ":" not in deadline_str:
+                    continue
+                hh, mm = deadline_str.split(":")
+                deadline_dt = datetime.combine(
+                    today, datetime.strptime(f"{hh}:{mm}", "%H:%M").time())
+
+                # 時刻範囲フィルタ
+                if from_dt and deadline_dt < from_dt:
+                    continue
+                if until_dt and deadline_dt > until_dt:
+                    continue
+
+                # まだ締切前かチェック
+                if deadline_dt < datetime.now() - timedelta(minutes=3):
+                    continue
+
+                scanned += 1
+
+                # オッズ取得して予測
+                odds = scraper.scrape_odds(place_no, race_no, date_str)
+                race.trifecta_odds = odds
+
+                pred = predict_race_v6(race)
+
+                # v6ルックフィルタ
+                is_look, look_reason = should_look_v6(pred, race)
+
+                if not is_look:
+                    tk = pred.get("tenkai_max", 0)
+                    ag = pred.get("agreement", 0)
+                    # 優先度 = 展開確信度 × 合意度
+                    priority = tk * ag
+                    candidates.append((
+                        priority, place_no, race_no, venue,
+                        deadline_str, deadline_dt
+                    ))
+                    print(f"  ✅ {venue} {race_no}R [{pred['race_type_tag']}] "
+                          f"tk={tk:.2f} ag={ag:.2f} (締切{deadline_str})")
+                    venue_count += 1
+                else:
+                    key = look_reason.split("(")[0] if "(" in look_reason else look_reason
+                    skipped_reasons[key] = skipped_reasons.get(key, 0) + 1
+
+            if venue_count > 0:
+                print(f"  → {venue}: {venue_count}R 候補")
+
+        except Exception as e:
+            print(f"  {venue}: SKIP ({e})")
+
+    # スキップ理由サマリー
+    print(f"\nスキャン: {scanned}R → 候補: {len(candidates)}R")
+    if skipped_reasons:
+        print("除外理由:")
+        for reason, count in sorted(skipped_reasons.items(), key=lambda x: -x[1]):
+            print(f"  {reason}: {count}R")
+
+    if not candidates:
+        print("\n🎯 厳選対象レースなし")
+        return
+
+    # === Pass 2: 優先度でソート → 上位N件を時刻順に実行 ===
+    candidates.sort(key=lambda x: x[0], reverse=True)  # 優先度降順
+    selected = candidates[:GENSEN_MAX_RACES]
+    selected.sort(key=lambda x: x[5])  # 締切時刻順に並べ替え
+
+    bet_per_race = V6_BUDGET
+    print(f"\n{'='*55}")
+    print(f"  🎯 v6厳選 {len(selected)}R (EV Top5 {bet_per_race}円/R)")
+    print(f"  フィルタ: tk≥{LOOK_TENKAI_MIN} ag≥{LOOK_AGREE_MIN}")
+    print(f"{'='*55}")
+    for pri, pn, rn, v, dl, dt in selected:
+        print(f"  {v} {rn}R 優先度={pri:.3f} (締切{dl})")
+
+    # 実行
+    processed = 0
+    for _, place_no, race_no, venue, deadline_str, deadline_dt in selected:
+        exec_time = deadline_dt - timedelta(minutes=NOTIFY_BEFORE_MIN)
+        now = datetime.now()
+        wait_sec = (exec_time - now).total_seconds()
+
+        if wait_sec > 0:
+            print(f"\n⏳ 次: {venue} {race_no}R (締切{deadline_str}) "
+                  f"→ {exec_time.strftime('%H:%M')}に実行 "
+                  f"(あと{wait_sec/60:.0f}分)")
+            time.sleep(max(0, wait_sec))
+
+        print(f"\n🎯 {venue} {race_no}R (締切{deadline_str})")
+        ok = process_race(scraper, date_str, place_no, race_no,
+                          venue, deadline_str, dry_run, gensen=True)
+        if ok:
+            processed += 1
+        time.sleep(2)
+
+    print(f"\n{'='*55}")
+    print(f"  🎯 v6厳選完了: {processed}/{len(selected)}R処理")
+    print(f"  投資額: {processed * bet_per_race:,}円")
+    print(f"{'='*55}")
 
 
 # ============================================================
@@ -293,5 +477,11 @@ if __name__ == "__main__":
                         help="開始時刻 (HH:MM) 例: 13:00")
     parser.add_argument("--until", default=None,
                         help="終了時刻 (HH:MM) 例: 13:30")
+    parser.add_argument("--gensen", action="store_true",
+                        help="厳選モード (1日3-5Rに絞り込み)")
     args = parser.parse_args()
-    run_scheduler(args.date, args.dry_run, args.from_time, args.until)
+
+    if args.gensen:
+        run_gensen_mode(args.date, args.dry_run, args.from_time, args.until)
+    else:
+        run_scheduler(args.date, args.dry_run, args.from_time, args.until)

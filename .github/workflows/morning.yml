@@ -21,7 +21,7 @@ jobs:
         with:
           python-version: '3.11'
       - run: pip install -r requirements.txt
-      - run: python race_day.py --until 13:30
+      - run: python race_day.py --until 13:30 --gensen
       - name: Commit data
         run: |
           git config user.name "boatrace-bot"
