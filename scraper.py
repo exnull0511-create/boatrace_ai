@@ -330,11 +330,16 @@ class BoatraceScraper:
         return races
 
     def scrape_full_race(self, place_no: int, race_no: int, hiduke: str,
-                         include_result: bool = False) -> Optional[Race]:
+                         include_result: bool = False,
+                         race_info_cache: list = None) -> Optional[Race]:
         """
         1レースの全データをAPI経由で取得
 
         1回のAPI呼び出しで基本情報・モータ・勝率等の全データを取得可能
+
+        Args:
+            race_info_cache: scrape_race_list() の結果を外部キャッシュとして渡す
+                             (同一場で複数Rを処理する際の重複リクエスト防止)
         """
         venue = VENUE_MAP.get(place_no, "?")
         print(f"[SCRAPE] {venue} {race_no}R ({hiduke})...")
@@ -364,8 +369,8 @@ class BoatraceScraper:
             grade_name=params.get("race_name", ""),
         )
 
-        # レース情報
-        race_info_list = self.scrape_race_list(place_no, hiduke)
+        # レース情報 (キャッシュがあればそこから、なければ取得)
+        race_info_list = race_info_cache if race_info_cache is not None else self.scrape_race_list(place_no, hiduke)
         for ri in race_info_list:
             if ri["race_no"] == race_no:
                 race.deadline = ri["deadline"]

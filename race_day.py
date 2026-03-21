@@ -17,7 +17,7 @@ import time
 from datetime import datetime, timedelta
 from pathlib import Path
 
-sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8')
+sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8', line_buffering=True)
 
 from scraper import BoatraceScraper
 from engine_v6 import (predict_race_v6, should_look_v6,
@@ -287,47 +287,96 @@ def run_gensen_mode(date_str: str = None, dry_run: bool = False,
         h, m = until_time.split(":")
         until_dt = datetime.combine(today, datetime.strptime(f"{h}:{m}", "%H:%M").time())
 
-    # === Pass 1: 全レーススキャン ===
+    # === 対策1: 開催場のみに絞る ===
     print(f"\n{'='*55}")
-    print(f"  🎯 厳選モード: 全場スキャン中...")
+    print(f"  🎯 厳選モード: 開催場チェック中...")
+    print(f"{'='*55}")
+
+    # まず scrape_today_schedule を試す
+    schedule = scraper.scrape_today_schedule(date_str)
+    active_venues_sched = [v for v in schedule.venues if v.status == "開催中"]
+
+    # race_list も全場分取得 (対策2+3で後で使う + 開催判定のフォールバック)
+    venue_race_lists = {}  # place_no -> race_info_list
+    for place_no in range(1, 25):
+        venue = VENUE_MAP.get(place_no, f"?{place_no}")
+        try:
+            race_info = scraper.scrape_race_list(place_no, date_str)
+            if race_info:
+                venue_race_lists[place_no] = race_info
+        except Exception:
+            pass
+
+    # 開催場決定: schedule が使えればそれ、なければ race_list の有無で判断
+    if active_venues_sched:
+        active_place_nos = [v.place_no for v in active_venues_sched]
+        print(f"  スケジュールAPI: {len(active_venues_sched)}場 開催中")
+    else:
+        active_place_nos = list(venue_race_lists.keys())
+        print(f"  フォールバック: race_list から{len(active_place_nos)}場を検出")
+
+    if not active_place_nos:
+        print("開催中の場がありません")
+        return
+
+    venue_names = [VENUE_MAP.get(p, f"?{p}") for p in active_place_nos]
+    print(f"  対象: {', '.join(venue_names)}")
+
+    # === Pass 1: 開催場のみスキャン ===
+    print(f"\n{'='*55}")
+    print(f"  🎯 厳選モード: {len(active_place_nos)}場スキャン中...")
     print(f"{'='*55}")
 
     candidates = []  # (priority, place_no, race_no, venue, deadline_str, deadline_dt)
     scanned = 0
     skipped_reasons = {}
 
-    for place_no in range(1, 25):
+    for place_no in active_place_nos:
         venue = VENUE_MAP.get(place_no, f"?{place_no}")
         try:
-            test_race = scraper.scrape_full_race(place_no, 1, date_str)
-            if not test_race or not test_race.racers:
+            # === 対策2+3: 事前取得済みの race_list で締切フィルタ + キャッシュ ===
+            race_info_list = venue_race_lists.get(place_no)
+            if not race_info_list:
+                race_info_list = scraper.scrape_race_list(place_no, date_str)
+            if not race_info_list:
+                print(f"  {venue}: レース一覧なし SKIP")
                 continue
 
-            venue_count = 0
-            for race_no in range(1, 13):
-                if race_no == 1:
-                    race = test_race
-                else:
-                    race = scraper.scrape_full_race(place_no, race_no, date_str)
-                    if not race or not race.racers:
-                        continue
-
-                # 締切チェック
-                deadline_str = race.deadline
+            # 対象レースを締切時刻で事前フィルタ
+            target_races = []
+            for ri in race_info_list:
+                deadline_str = ri.get("deadline", "")
                 if not deadline_str or ":" not in deadline_str:
                     continue
                 hh, mm = deadline_str.split(":")
                 deadline_dt = datetime.combine(
                     today, datetime.strptime(f"{hh}:{mm}", "%H:%M").time())
 
-                # 時刻範囲フィルタ
+                # 時刻範囲フィルタ (対策2: スクレイピング前にスキップ)
                 if from_dt and deadline_dt < from_dt:
                     continue
                 if until_dt and deadline_dt > until_dt:
                     continue
-
                 # まだ締切前かチェック
                 if deadline_dt < datetime.now() - timedelta(minutes=3):
+                    continue
+
+                target_races.append((ri["race_no"], deadline_str, deadline_dt))
+
+            if not target_races:
+                print(f"  {venue}: 対象レースなし (時刻範囲外)")
+                continue
+
+            print(f"  {venue}: {len(target_races)}R 対象 "
+                  f"(全{len(race_info_list)}R中)")
+
+            venue_count = 0
+            for race_no, deadline_str, deadline_dt in target_races:
+                # 対策3: キャッシュした race_info_list を渡す
+                race = scraper.scrape_full_race(
+                    place_no, race_no, date_str,
+                    race_info_cache=race_info_list)
+                if not race or not race.racers:
                     continue
 
                 scanned += 1
