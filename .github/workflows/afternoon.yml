@@ -14,7 +14,7 @@ env:
 jobs:
   afternoon:
     runs-on: ubuntu-latest
-    timeout-minutes: 300   # 5時間 (13:20-17:30)
+    timeout-minutes: 240   # 4時間 (13:20-17:20)
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5

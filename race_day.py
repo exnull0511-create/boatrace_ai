@@ -436,12 +436,27 @@ def run_gensen_mode(date_str: str = None, dry_run: bool = False,
     for pri, pn, rn, v, dl, dt in selected:
         print(f"  {v} {rn}R 優先度={pri:.3f} (締切{dl})")
 
-    # 実行
+    # 実行 (安全なタイムアウト制御付き)
     processed = 0
     for _, place_no, race_no, venue, deadline_str, deadline_dt in selected:
+        # 安全策1: --until を過ぎたら終了
+        if until_dt and datetime.now() > until_dt:
+            print(f"\n⏰ 終了時刻 ({until_time}) を過ぎたため終了")
+            break
+
         exec_time = deadline_dt - timedelta(minutes=NOTIFY_BEFORE_MIN)
         now = datetime.now()
         wait_sec = (exec_time - now).total_seconds()
+
+        # 安全策2: 既に締切を3分以上過ぎたレースはスキップ
+        if (deadline_dt - now).total_seconds() < -180:
+            print(f"  {venue} {race_no}R: 締切済み SKIP")
+            continue
+
+        # 安全策3: 待機時間が60分超なら異常としてスキップ
+        if wait_sec > 3600:
+            print(f"  {venue} {race_no}R: 待機{wait_sec/60:.0f}分は異常 SKIP")
+            continue
 
         if wait_sec > 0:
             print(f"\n⏳ 次: {venue} {race_no}R (締切{deadline_str}) "
@@ -498,6 +513,15 @@ def run_scheduler(date_str: str = None, dry_run: bool = False,
     for exec_time, place_no, race_no, venue, deadline_str in future:
         now = datetime.now()
         wait_sec = (exec_time - now).total_seconds()
+
+        # 安全策: 既に締切を3分以上過ぎたレースはスキップ
+        if wait_sec < -180:
+            continue
+
+        # 安全策: 待機時間が60分超なら異常としてスキップ
+        if wait_sec > 3600:
+            print(f"  {venue} {race_no}R: 待機{wait_sec/60:.0f}分は異常 SKIP")
+            continue
 
         if wait_sec > 0:
             print(f"⏳ 次: {venue} {race_no}R (締切{deadline_str}) "

@@ -14,18 +14,42 @@ env:
 jobs:
   morning:
     runs-on: ubuntu-latest
-    timeout-minutes: 330   # 5.5時間 (8:00-13:30)
+    timeout-minutes: 240   # 4時間 (8:00-12:00)
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
         with:
           python-version: '3.11'
       - run: pip install -r requirements.txt
-      - run: python race_day.py --until 13:30 --gensen
+      - run: |
+          git pull || true
+          python race_day.py --until 13:30 --gensen
       - name: Commit data
         run: |
           git config user.name "boatrace-bot"
           git config user.email "bot@boatrace.ai"
           git add data/
           git diff --cached --quiet || git commit -m "data: $(date +%Y%m%d) morning"
+          git push
+
+  settle:
+    runs-on: ubuntu-latest
+    needs: morning
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: master
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - run: pip install -r requirements.txt
+      - run: |
+          git pull
+          python result_checker.py
+      - name: Commit results
+        run: |
+          git config user.name "boatrace-bot"
+          git config user.email "bot@boatrace.ai"
+          git add data/
+          git diff --cached --quiet || git commit -m "results: $(date +%Y%m%d) morning settlement"
           git push
