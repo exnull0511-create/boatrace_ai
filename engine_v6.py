@@ -15,9 +15,9 @@ v4(PL確率) × v5(展開予測) のハイブリッドアンサンブル。
 パラメータ:
   α (ALPHA): v4への重み (0.0=v5のみ, 1.0=v4のみ)
 
-ルックフィルタ (634Rバックテスト最適化):
-  B案: tenkai_max ≥ 0.60 + agreement ≥ 0.65 → ROI 551%
-  A案: tenkai_max ≥ 0.65 + agreement ≥ 0.65 → ROI 970% (将来移行)
+ルックフィルタ (633Rバックテスト最適化):
+  中間: tenkai_max ≥ 0.62 + agreement ≥ 0.75 + top15/日 → ROI 612%, MaxDD 26,000円
+  厳選: tenkai_max ≥ 0.65 + agreement ≥ 0.75 → ROI 1240% (ボラ高)
 """
 import numpy as np
 from typing import Dict, List, Tuple, Optional
@@ -36,9 +36,9 @@ from engine_v5 import predict_race_v5 as predict_v5
 
 ALPHA = 0.3  # v4の重み (634Rバックテストで最適: ROI 143%, 的中率32.3%)
 
-# ルックフィルタ閾値 (B案: バランス型)
-LOOK_TENKAI_MIN = 0.60    # 展開確信度の最低値 (A案移行時: 0.65)
-LOOK_AGREE_MIN = 0.65     # v4v5合意度の最低値
+# ルックフィルタ閾値 (中間フィルタ: 14R/日, ROI 612%)
+LOOK_TENKAI_MIN = 0.62    # 展開確信度の最低値
+LOOK_AGREE_MIN = 0.75     # v4v5合意度の最低値
 
 # 買い目設定
 V6_MAX_BETS = 5           # EV Top5

@@ -37,7 +37,7 @@ NOTIFY_BEFORE_MIN = 7     # 締切の何分前に予想実行
 BUDGET_PER_RACE = 1000
 
 # 中穴EV狙いモード設定
-GENSEN_MAX_RACES = 5      # 厳選時の最大レース数
+GENSEN_MAX_RACES = 15     # 厳選時の最大レース数 (top15: ROI 612%, MaxDD 26k)
 
 
 # ============================================================
