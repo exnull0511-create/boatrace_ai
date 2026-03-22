@@ -453,8 +453,8 @@ def run_gensen_mode(date_str: str = None, dry_run: bool = False,
             print(f"  {venue} {race_no}R: 締切済み SKIP")
             continue
 
-        # 安全策3: 待機時間が60分超なら異常としてスキップ
-        if wait_sec > 3600:
+        # 安全策3: 待機時間が5時間超なら異常としてスキップ
+        if wait_sec > 18000:
             print(f"  {venue} {race_no}R: 待機{wait_sec/60:.0f}分は異常 SKIP")
             continue
 

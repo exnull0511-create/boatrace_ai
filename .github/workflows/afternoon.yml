@@ -14,7 +14,7 @@ env:
 jobs:
   afternoon:
     runs-on: ubuntu-latest
-    timeout-minutes: 240   # 4時間 (13:20-17:20)
+    timeout-minutes: 360   # 6時間 (13:20-19:20 余裕込み)
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
@@ -23,7 +23,7 @@ jobs:
       - run: pip install -r requirements.txt
       - run: |
           git pull
-          python race_day.py --from 13:00 --gensen
+          python race_day.py --from 13:00 --until 20:00 --gensen
       - name: Commit data
         run: |
           git config user.name "boatrace-bot"
