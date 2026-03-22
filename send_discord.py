@@ -44,13 +44,8 @@ def send_prediction(venue: str, race_no: int, race_type: str,
         lines = []
         total_bet = 0
         for b in bets:
-            # v6: odds は倍率形式 (10.1 = 10.1倍)
-            # 旧エンジン: odds は100円単位払戻 (1010 = 10.1倍)
-            raw_odds = b['odds']
-            if raw_odds > 500:  # 旧形式 (払戻金額)
-                odds_bai = raw_odds / 100
-            else:  # v6形式 (倍率そのまま)
-                odds_bai = raw_odds
+            # odds は常に100円単位の払戻金額 (例: 1045.0 = 10.45倍)
+            odds_bai = b['odds'] / 100
             ev_str = f" EV={b['ev']:.2f}" if 'ev' in b else ""
             lines.append(f"`{b['combo']}` **{odds_bai:.1f}倍**{ev_str} → {b['amount']}円")
             total_bet += b['amount']
