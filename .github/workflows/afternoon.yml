@@ -8,6 +8,7 @@ permissions:
   contents: write
 
 env:
+  TZ: Asia/Tokyo
   DISCORD_WEBHOOK_BOATRACE: ${{ secrets.DISCORD_WEBHOOK_BOATRACE }}
   DISCORD_WEBHOOK_BOATRACE_RESULTS: ${{ secrets.DISCORD_WEBHOOK_BOATRACE_RESULTS }}
 
