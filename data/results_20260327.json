@@ -1,0 +1,55 @@
+{
+  "date": "20260327",
+  "total_races": 4,
+  "hits": 0,
+  "total_bet": 4000,
+  "total_payout": 0,
+  "roi": 0.0,
+  "look_count": 0,
+  "results": [
+    {
+      "venue": "蒲郡",
+      "race_no": 1,
+      "actual": "1-5-3",
+      "kimarite": "逃げ",
+      "payout_odds": 18840,
+      "hit": false,
+      "bet_amount": 1000,
+      "win_amount": 0,
+      "race_type": "通常"
+    },
+    {
+      "venue": "福岡",
+      "race_no": 12,
+      "actual": "1-5-2",
+      "kimarite": "逃げ",
+      "payout_odds": 3020,
+      "hit": false,
+      "bet_amount": 1000,
+      "win_amount": 0,
+      "race_type": "通常"
+    },
+    {
+      "venue": "蒲郡",
+      "race_no": 8,
+      "actual": "6-2-4",
+      "kimarite": "まくり",
+      "payout_odds": 9640,
+      "hit": false,
+      "bet_amount": 1000,
+      "win_amount": 0,
+      "race_type": "通常"
+    },
+    {
+      "venue": "蒲郡",
+      "race_no": 10,
+      "actual": "0-0-0",
+      "kimarite": "",
+      "payout_odds": 0,
+      "hit": false,
+      "bet_amount": 1000,
+      "win_amount": 0,
+      "race_type": "通常"
+    }
+  ]
+}
