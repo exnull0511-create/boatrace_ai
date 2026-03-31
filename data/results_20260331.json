@@ -1,0 +1,22 @@
+{
+  "date": "20260331",
+  "total_races": 1,
+  "hits": 0,
+  "total_bet": 1000,
+  "total_payout": 0,
+  "roi": 0.0,
+  "look_count": 0,
+  "results": [
+    {
+      "venue": "芦屋",
+      "race_no": 2,
+      "actual": "0-0-0",
+      "kimarite": "",
+      "payout_odds": 0,
+      "hit": false,
+      "bet_amount": 1000,
+      "win_amount": 0,
+      "race_type": "通常"
+    }
+  ]
+}
