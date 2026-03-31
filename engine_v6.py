@@ -36,13 +36,24 @@ from engine_v5 import predict_race_v5 as predict_v5
 
 ALPHA = 0.3  # v4の重み (634Rバックテストで最適: ROI 143%, 的中率32.3%)
 
-# ルックフィルタ閾値 (中間フィルタ: 14R/日, ROI 612%)
-LOOK_TENKAI_MIN = 0.62    # 展開確信度の最低値
-LOOK_AGREE_MIN = 0.75     # v4v5合意度の最低値
+# ルックフィルタ閾値
+# 23日間3212Rの分析結果:
+#   ag<0.40 top5/日: ROI 129%, DD 30,650円, 5R/日 (推奨)
+#   ag<0.15:         ROI 121%, DD 34,690円, 10R/日
+#   ag<0.30:         ROI 128%, DD 58,490円, 18R/日
+# 理論: モデル不一致 → オッズ非効率 → 優位性あり
+LOOK_TENKAI_MIN = 0.0     # 展開確信度フィルタは無効化
+LOOK_AGREE_MAX = 0.40     # 合意度の上限 (低合意のみベット)
+LOOK_AGREE_MIN = 0.0      # 合意度の下限 (互換性のため残す)
 
 # 買い目設定
 V6_MAX_BETS = 5           # EV Top5
 V6_BUDGET = 1000          # 1R合計予算
+
+# ガードレール (Phase 1 バグ修正: 3月全滅の根本原因)
+V6_EV_MIN = 0.8           # EV最低閾値 (1.0=損益分岐, 0.8=20%損でもシグナルあり)
+V6_PROB_MIN = 0.01        # 確率フロア (1%未満=ランダム0.83%と区別不能)
+V6_ODDS_MAX_BAI = 300.0   # オッズ上限 (300倍超=確率推定の精度が極端に低い)
 
 
 # ============================================================
@@ -102,11 +113,11 @@ def compute_agreement(probs_v4: Dict[str, float],
 
 def compute_expected_values(probs: Dict[str, float],
                             odds: Dict[str, float]) -> Dict[str, float]:
-    """EV = モデル確率 × オッズ (倍率)"""
+    """EV = モデル確率 × オッズ (倍率)。EV >= 1.0 が損益分岐点。"""
     evs = {}
     for combo, prob in probs.items():
         if combo in odds and odds[combo] > 0:
-            evs[combo] = prob * odds[combo] / 100
+            evs[combo] = prob * odds[combo]
     return evs
 
 
@@ -178,14 +189,15 @@ def predict_race_v6(race: Race, alpha: float = ALPHA) -> dict:
 
 def should_look_v6(prediction: dict, race: Race,
                    tenkai_min: float = LOOK_TENKAI_MIN,
+                   agree_max: float = LOOK_AGREE_MAX,
                    agree_min: float = LOOK_AGREE_MIN) -> Tuple[bool, str]:
     """
-    v6ルックフィルタ: 展開確信度 + v4v5合意度 で勝負レースを選定。
+    v6ルックフィルタ: 低合意レースのみベット。
 
-    634Rバックテストで発見:
-      - tenkai_max < 0.50 → 的中0
-      - agreement  < 0.30 → 的中0
-      - tenkai_max ≥ 0.60 + agreement ≥ 0.65 → ROI 551%
+    12日1762Rの分析結果:
+      - ag < 0.5: ROI 140%, 黒字日67%
+      - ag >= 0.5: ROI 80-82% (赤字)
+    理論: モデル不一致→オッズ非効率→優位性あり
 
     Returns:
         (is_look, reason): is_look=True → 見送り
@@ -194,12 +206,16 @@ def should_look_v6(prediction: dict, race: Race,
     agreement = prediction.get("agreement", 0)
     tag = prediction.get("race_type_tag", "")
 
-    # 展開確信度が低い → 展開が読めないレース
-    if tenkai_max < tenkai_min:
+    # 展開確信度が極端に低い → 読めないレース
+    if tenkai_min > 0 and tenkai_max < tenkai_min:
         return True, f"展開不明(tk={tenkai_max:.2f}<{tenkai_min})"
 
-    # v4v5合意度が低い → モデルが矛盾
-    if agreement < agree_min:
+    # 合意度が高すぎる → オッズが効率的で優位性なし
+    if agreement >= agree_max:
+        return True, f"高合意(ag={agreement:.2f}>={agree_max})"
+
+    # 合意度の下限 (互換性)
+    if agree_min > 0 and agreement < agree_min:
         return True, f"モデル不一致(ag={agreement:.2f}<{agree_min})"
 
     return False, ""
@@ -221,10 +237,19 @@ class BetCandidateV6:
 
 def select_ev_top_bets(prediction: dict, race: Race,
                        max_bets: int = V6_MAX_BETS,
-                       budget: int = V6_BUDGET) -> List[BetCandidateV6]:
+                       budget: int = V6_BUDGET,
+                       ev_min: float = V6_EV_MIN,
+                       prob_min: float = V6_PROB_MIN,
+                       odds_max_bai: float = V6_ODDS_MAX_BAI,
+                       ) -> List[BetCandidateV6]:
     """
     v6のEV Top N を買い目として選定。
     EV比率で予算配分。
+
+    ガードレール (Phase 1):
+      - ev >= ev_min: 期待値が低すぎるcomboを排除
+      - prob >= prob_min: モデルにシグナルがないcomboを排除
+      - odds <= odds_max_bai: 超大穴(確率推定が不正確)を排除
     """
     evs = prediction.get("evs", {})
     probs = prediction.get("probs", {})
@@ -235,12 +260,22 @@ def select_ev_top_bets(prediction: dict, race: Race,
 
     ev_sorted = sorted(evs.items(), key=lambda x: -x[1])
     candidates = []
-    for combo, ev in ev_sorted[:max_bets]:
+    for combo, ev in ev_sorted:
+        if ev < ev_min:
+            break  # EV降順なのでこれ以降は全て閾値未満
         odds_val = odds.get(combo, 0)
         prob = probs.get(combo, 0)
+
+        if prob < prob_min:
+            continue
+        if odds_val > odds_max_bai:
+            continue
+
         candidates.append(BetCandidateV6(
             combo=combo, prob=prob, odds=odds_val, ev=ev
         ))
+        if len(candidates) >= max_bets:
+            break
 
     if not candidates:
         return []

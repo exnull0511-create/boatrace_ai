@@ -18,6 +18,15 @@ from itertools import permutations
 from typing import List, Dict, Tuple
 from models import Racer, Race
 from config import NUM_BOATS, VENUE_MAP
+from rolling_stats import RollingStats, DEFAULT_KIMARITE
+
+# ローリング統計のグローバルインスタンス (起動時に1回ロード)
+_rolling_stats = RollingStats()
+_rolling_loaded = _rolling_stats.load(lookback_days=21)
+if _rolling_loaded:
+    _BASE_KIMARITE = _rolling_stats.kimarite_dist
+else:
+    _BASE_KIMARITE = DEFAULT_KIMARITE
 
 # ============================================================
 # 場特性テーブル
@@ -151,16 +160,10 @@ def predict_tenkai(features: dict) -> Dict[str, float]:
         {"逃げ": 0.55, "差し": 0.13, "まくり": 0.17, "まくり差し": 0.10, "抜き": 0.05}
     """
     if not features:
-        return {"逃げ": 0.54, "差し": 0.13, "まくり": 0.17, "まくり差し": 0.11, "抜き": 0.05}
+        return _BASE_KIMARITE.copy()
 
-    # ベース確率 (634Rの全体統計)
-    p = {
-        "逃げ": 0.54,
-        "差し": 0.13,
-        "まくり": 0.17,
-        "まくり差し": 0.11,
-        "抜き": 0.05,
-    }
+    # ベース確率 (ローリング統計 or デフォルト)
+    p = _BASE_KIMARITE.copy()
 
     nige_1 = features["nige_1"]
     sashi_2 = features["sashi_2"]

@@ -12,10 +12,22 @@ sys.path.insert(0, r'c:\money plus\boatrace_ai')
 from scraper import BoatraceScraper
 from config import VENUE_MAP
 
-DATES = [
-    "20260312", "20260313", "20260314", "20260315",
-    "20260316", "20260317", "20260318",
-]
+def _generate_dates(start: str, end: str) -> list:
+    """開始日〜終了日の日付リストを生成 (yyyymmdd形式)"""
+    from datetime import datetime, timedelta
+    s = datetime.strptime(start, "%Y%m%d")
+    e = datetime.strptime(end, "%Y%m%d")
+    dates = []
+    d = s
+    while d <= e:
+        dates.append(d.strftime("%Y%m%d"))
+        d += timedelta(days=1)
+    return dates
+
+
+# デフォルト: 60日分 (2月〜3月)
+# コマンドライン引数で --start / --end を指定可能
+DATES = _generate_dates("20260201", "20260331")
 
 OUTPUT_DIR = r"c:\money plus\boatrace_ai\data\raw"
 
@@ -79,15 +91,30 @@ def collect_raw_day(scraper, hiduke):
 
 
 def main():
+    import argparse
+    parser = argparse.ArgumentParser(description="生データ収集")
+    parser.add_argument("--start", default=None, help="開始日 (yyyymmdd)")
+    parser.add_argument("--end", default=None, help="終了日 (yyyymmdd)")
+    args = parser.parse_args()
+
+    dates = DATES
+    if args.start and args.end:
+        dates = _generate_dates(args.start, args.end)
+    elif args.start:
+        dates = _generate_dates(args.start, "20260331")
+    elif args.end:
+        dates = _generate_dates("20260201", args.end)
+
     os.makedirs(OUTPUT_DIR, exist_ok=True)
     scraper = BoatraceScraper()
 
     print("=" * 60)
-    print("  📦 7日分 生データ収集")
+    print(f"  📦 {len(dates)}日分 生データ収集")
+    print(f"  期間: {dates[0]} 〜 {dates[-1]}")
     print(f"  保存先: {OUTPUT_DIR}")
     print("=" * 60)
 
-    for hiduke in DATES:
+    for hiduke in dates:
         fname = os.path.join(OUTPUT_DIR, f"{hiduke}.json")
 
         if os.path.exists(fname):
@@ -117,15 +144,14 @@ def main():
     # サマリー
     print(f"\n{'='*60}")
     total = 0
-    for hiduke in DATES:
+    for hiduke in dates:
         fname = os.path.join(OUTPUT_DIR, f"{hiduke}.json")
         if os.path.exists(fname):
             d = json.load(open(fname, encoding='utf-8'))
             total += len(d)
-            print(f"  {hiduke}: {len(d):>3}R")
         else:
-            print(f"  {hiduke}: なし")
-    print(f"  合計: {total}R")
+            pass  # 開催なしの日は表示しない
+    print(f"  合計: {total}R ({len(dates)}日間)")
     print(f"\n→ python fast_backtest.py でバックテスト")
 
 

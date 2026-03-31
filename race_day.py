@@ -23,7 +23,7 @@ from scraper import BoatraceScraper
 from engine_v6 import (predict_race_v6, should_look_v6,
                        select_ev_top_bets, V6_BUDGET,
                        LOOK_TENKAI_MIN, LOOK_AGREE_MIN)
-from strategy import allocate_portfolio, CHUUANA_BUDGET
+from strategy import allocate_portfolio, should_look, CHUUANA_BUDGET
 from send_discord import send_prediction, send_daily_summary
 from config import VENUE_MAP, BET_BASE
 
@@ -36,8 +36,10 @@ DATA_DIR.mkdir(exist_ok=True)
 NOTIFY_BEFORE_MIN = 7     # 締切の何分前に予想実行
 BUDGET_PER_RACE = 1000
 
-# 中穴EV狙いモード設定
-GENSEN_MAX_RACES = 15     # 厳選時の最大レース数 (top15: ROI 612%, MaxDD 26k)
+# 厳選モード設定
+# 23日間バックテスト: ag<0.40 top5/日 → ROI 129%, DD 30,650円
+GENSEN_MAX_RACES = 5      # 厳選時の最大レース数 (低合意top5)
+DAILY_BUDGET_MAX = 7000   # 1日の最大投資額 (円)
 
 
 # ============================================================
@@ -183,31 +185,31 @@ def process_race(scraper: BoatraceScraper, date_str: str,
 
         # v6ハイブリッド予測
         pred = predict_race_v6(race)
-        is_look, look_reason = should_look_v6(pred, race)
 
-        if gensen:
-            # v6 EV Top5 買い目
-            if not is_look:
-                v6_bets = select_ev_top_bets(pred, race)
-                if v6_bets:
-                    bets_data = [{"combo": b.combo, "odds": b.odds,
-                                  "prob": b.prob, "ev": round(b.ev, 4),
-                                  "amount": b.bet_amount}
-                                 for b in v6_bets]
-                else:
-                    bets_data = []
-                    is_look = True
-                    look_reason = "EV買い目なし"
-            else:
-                bets_data = []
-        elif is_look:
+        # ルックフィルタ: v6フィルタ + ガチガチ除外 (strategy.py)
+        is_look, look_reason = should_look_v6(pred, race)
+        if not is_look:
+            # ガチガチは常にスキップ (strategy.py の should_look)
+            is_look_v4, look_reason_v4 = should_look(pred, race)
+            if is_look_v4 and "ガチガチ" in look_reason_v4:
+                is_look = True
+                look_reason = look_reason_v4
+
+        if is_look:
             bets_data = []
         else:
-            v6_bets = select_ev_top_bets(pred, race)
-            bets_data = [{"combo": b.combo, "odds": b.odds,
-                          "prob": b.prob, "ev": round(b.ev, 4),
-                          "amount": b.bet_amount}
-                         for b in v6_bets]
+            # 確率Top5配分 (v6確率分布ベース)
+            # 4日間OOSテスト: 確率Top5 ROI 99% vs EV Top5 ROI 64%
+            prob_bets = allocate_portfolio(pred, budget=BUDGET_PER_RACE, max_bets=5)
+            if prob_bets:
+                bets_data = [{"combo": b.combo, "odds": b.odds,
+                              "prob": b.prob, "ev": round(b.ev, 4) if b.ev else 0,
+                              "amount": b.bet_amount}
+                             for b in prob_bets]
+            else:
+                bets_data = []
+                is_look = True
+                look_reason = "確率買い目なし"
 
         # データ蓄積 (v6メタデータ含む)
         scores = pred["scores"]
@@ -389,12 +391,16 @@ def run_gensen_mode(date_str: str = None, dry_run: bool = False,
 
                 # v6ルックフィルタ
                 is_look, look_reason = should_look_v6(pred, race)
+                if not is_look and pred.get("race_type_tag") == "ガチガチ":
+                    is_look = True
+                    look_reason = "ガチガチ(控除率負け)"
 
                 if not is_look:
                     tk = pred.get("tenkai_max", 0)
                     ag = pred.get("agreement", 0)
-                    # 優先度 = 展開確信度 × 合意度
-                    priority = tk * ag
+                    # 優先度 = 低合意ほど高い (ag<0.5がROI 140%)
+                    # 1.0 - ag でスコア化 (ag=0.1 → 0.9, ag=0.4 → 0.6)
+                    priority = 1.0 - ag
                     candidates.append((
                         priority, place_no, race_no, venue,
                         deadline_str, deadline_dt
@@ -429,16 +435,29 @@ def run_gensen_mode(date_str: str = None, dry_run: bool = False,
     selected.sort(key=lambda x: x[5])  # 締切時刻順に並べ替え
 
     bet_per_race = V6_BUDGET
+    # 日次予算上限チェック
+    max_possible = len(selected) * bet_per_race
+    if max_possible > DAILY_BUDGET_MAX:
+        # 予算内に収まるようレース数を制限
+        max_races = DAILY_BUDGET_MAX // bet_per_race
+        selected = selected[:max_races]
+
     print(f"\n{'='*55}")
-    print(f"  🎯 v6厳選 {len(selected)}R (EV Top5 {bet_per_race}円/R)")
+    print(f"  🎯 v6厳選 {len(selected)}R (確率Top5 {bet_per_race}円/R)")
     print(f"  フィルタ: tk≥{LOOK_TENKAI_MIN} ag≥{LOOK_AGREE_MIN}")
+    print(f"  日次予算上限: {DAILY_BUDGET_MAX:,}円")
     print(f"{'='*55}")
     for pri, pn, rn, v, dl, dt in selected:
         print(f"  {v} {rn}R 優先度={pri:.3f} (締切{dl})")
 
     # 実行 (安全なタイムアウト制御付き)
     processed = 0
+    daily_spent = 0
     for _, place_no, race_no, venue, deadline_str, deadline_dt in selected:
+        # 日次予算チェック
+        if daily_spent + bet_per_race > DAILY_BUDGET_MAX:
+            print(f"\n💰 日次予算上限 ({DAILY_BUDGET_MAX:,}円) に到達")
+            break
         # 安全策1: --until を過ぎたら終了
         if until_dt and datetime.now() > until_dt:
             print(f"\n⏰ 終了時刻 ({until_time}) を過ぎたため終了")
@@ -469,6 +488,7 @@ def run_gensen_mode(date_str: str = None, dry_run: bool = False,
                           venue, deadline_str, dry_run, gensen=True)
         if ok:
             processed += 1
+            daily_spent += bet_per_race
         time.sleep(2)
 
     print(f"\n{'='*55}")
