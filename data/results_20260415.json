@@ -1,0 +1,33 @@
+{
+  "date": "20260415",
+  "total_races": 2,
+  "hits": 0,
+  "total_bet": 1400,
+  "total_payout": 0,
+  "roi": 0.0,
+  "look_count": 0,
+  "results": [
+    {
+      "venue": "若松",
+      "race_no": 3,
+      "actual": "2-3-4",
+      "kimarite": "まくり",
+      "payout_odds": 1280,
+      "hit": false,
+      "bet_amount": 700,
+      "win_amount": 0,
+      "race_type": "本命崩れ"
+    },
+    {
+      "venue": "若松",
+      "race_no": 9,
+      "actual": "0-0-0",
+      "kimarite": "",
+      "payout_odds": 0,
+      "hit": false,
+      "bet_amount": 700,
+      "win_amount": 0,
+      "race_type": "本命崩れ"
+    }
+  ]
+}
