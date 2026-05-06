@@ -1,0 +1,44 @@
+{
+  "date": "20260506",
+  "total_races": 3,
+  "hits": 0,
+  "total_bet": 2000,
+  "total_payout": 0,
+  "roi": 0.0,
+  "look_count": 0,
+  "results": [
+    {
+      "venue": "若松",
+      "race_no": 3,
+      "actual": "1-4-2",
+      "kimarite": "逃げ",
+      "payout_odds": 5930,
+      "hit": false,
+      "bet_amount": 700,
+      "win_amount": 0,
+      "race_type": "混戦"
+    },
+    {
+      "venue": "住之江",
+      "race_no": 6,
+      "actual": "1-2-3",
+      "kimarite": "逃げ",
+      "payout_odds": 1220,
+      "hit": false,
+      "bet_amount": 600,
+      "win_amount": 0,
+      "race_type": "混戦"
+    },
+    {
+      "venue": "住之江",
+      "race_no": 8,
+      "actual": "0-0-0",
+      "kimarite": "",
+      "payout_odds": 0,
+      "hit": false,
+      "bet_amount": 700,
+      "win_amount": 0,
+      "race_type": "通常"
+    }
+  ]
+}
