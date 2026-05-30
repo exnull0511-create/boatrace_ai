@@ -1,0 +1,516 @@
+[
+ {
+  "place_no": 1,
+  "venue": "桐生",
+  "race_no": 3,
+  "deadline": "16:37",
+  "race_type": "混戦",
+  "is_look": false,
+  "look_reason": "",
+  "score_gap": 0.778,
+  "tenkai_max": 0.374,
+  "agreement": 0.153,
+  "bets": [
+   {
+    "combo": "1-3-4",
+    "odds": 50.3,
+    "prob": 0.030349270254605012,
+    "ev": 1.5266,
+    "amount": 200
+   },
+   {
+    "combo": "1-3-6",
+    "odds": 35.8,
+    "prob": 0.028060786736329016,
+    "ev": 1.0046,
+    "amount": 200
+   },
+   {
+    "combo": "1-3-2",
+    "odds": 59.2,
+    "prob": 0.02537278387950317,
+    "ev": 1.5021,
+    "amount": 100
+   },
+   {
+    "combo": "1-2-3",
+    "odds": 56.4,
+    "prob": 0.024496589221138256,
+    "ev": 1.3816,
+    "amount": 100
+   },
+   {
+    "combo": "3-1-4",
+    "odds": 82.8,
+    "prob": 0.020233080172524825,
+    "ev": 1.6753,
+    "amount": 100
+   }
+  ],
+  "top5_prob": [
+   {
+    "combo": "3-5-1",
+    "prob": 0.01124
+   },
+   {
+    "combo": "3-5-6",
+    "prob": 0.00945
+   },
+   {
+    "combo": "1-5-4",
+    "prob": 0.0089
+   },
+   {
+    "combo": "3-5-4",
+    "prob": 0.01022
+   },
+   {
+    "combo": "1-5-6",
+    "prob": 0.00823
+   }
+  ],
+  "racers": [
+   {
+    "waku": 1,
+    "name": "木幡純也",
+    "grade": "B1",
+    "score": 2.325
+   },
+   {
+    "waku": 2,
+    "name": "久保原秀人",
+    "grade": "B1",
+    "score": 1.515
+   },
+   {
+    "waku": 3,
+    "name": "杉村賢也",
+    "grade": "A2",
+    "score": 3.113
+   },
+   {
+    "waku": 4,
+    "name": "渡邉俊介",
+    "grade": "A2",
+    "score": 2.335
+   },
+   {
+    "waku": 5,
+    "name": "増本杏珠",
+    "grade": "B1",
+    "score": 0.846
+   },
+   {
+    "waku": 6,
+    "name": "前田将太",
+    "grade": "A1",
+    "score": 2.319
+   }
+  ],
+  "timestamp": "2026-05-30T16:30:07.529520"
+ },
+ {
+  "place_no": 15,
+  "venue": "丸亀",
+  "race_no": 4,
+  "deadline": "17:00",
+  "race_type": "本命崩れ",
+  "is_look": false,
+  "look_reason": "",
+  "score_gap": 0.992,
+  "tenkai_max": 0.518,
+  "agreement": 0.332,
+  "bets": [
+   {
+    "combo": "1-2-4",
+    "odds": 94.0,
+    "prob": 0.03129164298912872,
+    "ev": 2.9414,
+    "amount": 200
+   },
+   {
+    "combo": "1-2-5",
+    "odds": 53.0,
+    "prob": 0.03075654320196359,
+    "ev": 1.6301,
+    "amount": 200
+   },
+   {
+    "combo": "1-2-6",
+    "odds": 73.5,
+    "prob": 0.030361586389567426,
+    "ev": 2.2316,
+    "amount": 200
+   },
+   {
+    "combo": "1-3-4",
+    "odds": 78.7,
+    "prob": 0.029886613416339813,
+    "ev": 2.3521,
+    "amount": 100
+   },
+   {
+    "combo": "1-3-5",
+    "odds": 42.0,
+    "prob": 0.02937554020475662,
+    "ev": 1.2338,
+    "amount": 100
+   }
+  ],
+  "top5_prob": [
+   {
+    "combo": "2-1-4",
+    "prob": 0.01299
+   },
+   {
+    "combo": "1-2-4",
+    "prob": 0.03129
+   },
+   {
+    "combo": "2-1-5",
+    "prob": 0.01277
+   },
+   {
+    "combo": "2-1-3",
+    "prob": 0.01084
+   },
+   {
+    "combo": "2-1-6",
+    "prob": 0.01261
+   }
+  ],
+  "racers": [
+   {
+    "waku": 1,
+    "name": "古田祐貴",
+    "grade": "A2",
+    "score": 3.456
+   },
+   {
+    "waku": 2,
+    "name": "中島航",
+    "grade": "B1",
+    "score": 1.289
+   },
+   {
+    "waku": 3,
+    "name": "大塚雅治",
+    "grade": "B1",
+    "score": 1.602
+   },
+   {
+    "waku": 4,
+    "name": "平見真彦",
+    "grade": "B1",
+    "score": 2.319
+   },
+   {
+    "waku": 5,
+    "name": "中岡正彦",
+    "grade": "A1",
+    "score": 2.381
+   },
+   {
+    "waku": 6,
+    "name": "椎名豊",
+    "grade": "A1",
+    "score": 2.464
+   }
+  ],
+  "timestamp": "2026-05-30T16:53:07.592067"
+ },
+ {
+  "place_no": 1,
+  "venue": "桐生",
+  "race_no": 4,
+  "deadline": "17:12",
+  "race_type": "本命崩れ",
+  "is_look": true,
+  "look_reason": "高合意(ag=0.42>=0.4)",
+  "score_gap": 0.132,
+  "tenkai_max": 0.424,
+  "agreement": 0.421,
+  "bets": [],
+  "top5_prob": [
+   {
+    "combo": "3-6-2",
+    "prob": 0.00662
+   },
+   {
+    "combo": "1-3-6",
+    "prob": 0.01834
+   },
+   {
+    "combo": "3-1-6",
+    "prob": 0.00976
+   },
+   {
+    "combo": "3-6-1",
+    "prob": 0.00809
+   },
+   {
+    "combo": "3-4-1",
+    "prob": 0.01044
+   }
+  ],
+  "racers": [
+   {
+    "waku": 1,
+    "name": "市川美宏",
+    "grade": "B1",
+    "score": 2.392
+   },
+   {
+    "waku": 2,
+    "name": "門間雄大",
+    "grade": "B1",
+    "score": 1.828
+   },
+   {
+    "waku": 3,
+    "name": "西田和加",
+    "grade": "B2",
+    "score": 1.506
+   },
+   {
+    "waku": 4,
+    "name": "庄司樹良々",
+    "grade": "A2",
+    "score": 2.26
+   },
+   {
+    "waku": 5,
+    "name": "宮崎奨",
+    "grade": "A2",
+    "score": 1.794
+   },
+   {
+    "waku": 6,
+    "name": "小山勉",
+    "grade": "A1",
+    "score": 1.615
+   }
+  ],
+  "timestamp": "2026-05-30T17:05:07.568037"
+ },
+ {
+  "place_no": 12,
+  "venue": "住之江",
+  "race_no": 5,
+  "deadline": "17:31",
+  "race_type": "本命崩れ",
+  "is_look": false,
+  "look_reason": "",
+  "score_gap": 0.039,
+  "tenkai_max": 0.483,
+  "agreement": 0.237,
+  "bets": [
+   {
+    "combo": "1-2-5",
+    "odds": 14.6,
+    "prob": 0.03988983742850275,
+    "ev": 0.5824,
+    "amount": 200
+   },
+   {
+    "combo": "1-2-4",
+    "odds": 23.0,
+    "prob": 0.03237797139942243,
+    "ev": 0.7447,
+    "amount": 200
+   },
+   {
+    "combo": "1-5-2",
+    "odds": 17.0,
+    "prob": 0.028194213098209995,
+    "ev": 0.4793,
+    "amount": 100
+   },
+   {
+    "combo": "1-2-6",
+    "odds": 13.4,
+    "prob": 0.02788425061974725,
+    "ev": 0.3736,
+    "amount": 100
+   },
+   {
+    "combo": "1-2-3",
+    "odds": 40.4,
+    "prob": 0.02602613463412906,
+    "ev": 1.0515,
+    "amount": 100
+   }
+  ],
+  "top5_prob": [
+   {
+    "combo": "3-6-5",
+    "prob": 0.00501
+   },
+   {
+    "combo": "3-4-5",
+    "prob": 0.00555
+   },
+   {
+    "combo": "3-5-4",
+    "prob": 0.00608
+   },
+   {
+    "combo": "3-5-6",
+    "prob": 0.00524
+   },
+   {
+    "combo": "4-5-3",
+    "prob": 0.00731
+   }
+  ],
+  "racers": [
+   {
+    "waku": 1,
+    "name": "松本一毅",
+    "grade": "A2",
+    "score": 2.884
+   },
+   {
+    "waku": 2,
+    "name": "安藤裕貴",
+    "grade": "B1",
+    "score": 2.156
+   },
+   {
+    "waku": 3,
+    "name": "菅野はやか",
+    "grade": "B2",
+    "score": 1.188
+   },
+   {
+    "waku": 4,
+    "name": "岡本大",
+    "grade": "B1",
+    "score": 2.03
+   },
+   {
+    "waku": 5,
+    "name": "石田貴洋",
+    "grade": "B1",
+    "score": 2.845
+   },
+   {
+    "waku": 6,
+    "name": "角谷健吾",
+    "grade": "A1",
+    "score": 1.778
+   }
+  ],
+  "timestamp": "2026-05-30T17:24:07.439457"
+ },
+ {
+  "place_no": 7,
+  "venue": "蒲郡",
+  "race_no": 8,
+  "deadline": "18:58",
+  "race_type": "本命崩れ",
+  "is_look": false,
+  "look_reason": "",
+  "score_gap": 0.025,
+  "tenkai_max": 0.548,
+  "agreement": 0.262,
+  "bets": [
+   {
+    "combo": "1-3-4",
+    "odds": 13.9,
+    "prob": 0.04660315343142027,
+    "ev": 0.6478,
+    "amount": 200
+   },
+   {
+    "combo": "1-4-3",
+    "odds": 12.1,
+    "prob": 0.04294303880478542,
+    "ev": 0.5196,
+    "amount": 200
+   },
+   {
+    "combo": "1-2-4",
+    "odds": 19.6,
+    "prob": 0.0413261143999922,
+    "ev": 0.81,
+    "amount": 200
+   },
+   {
+    "combo": "1-4-2",
+    "odds": 13.8,
+    "prob": 0.0348473700502497,
+    "ev": 0.4809,
+    "amount": 100
+   },
+   {
+    "combo": "1-4-6",
+    "odds": 14.3,
+    "prob": 0.03284307390575308,
+    "ev": 0.4697,
+    "amount": 100
+   }
+  ],
+  "top5_prob": [
+   {
+    "combo": "1-5-4",
+    "prob": 0.02376
+   },
+   {
+    "combo": "2-1-5",
+    "prob": 0.00757
+   },
+   {
+    "combo": "1-6-5",
+    "prob": 0.01067
+   },
+   {
+    "combo": "1-5-6",
+    "prob": 0.01266
+   },
+   {
+    "combo": "2-1-6",
+    "prob": 0.00797
+   }
+  ],
+  "racers": [
+   {
+    "waku": 1,
+    "name": "池田剛規",
+    "grade": "A2",
+    "score": 3.88
+   },
+   {
+    "waku": 2,
+    "name": "上村宏太",
+    "grade": "B1",
+    "score": 1.732
+   },
+   {
+    "waku": 3,
+    "name": "金山立樹",
+    "grade": "B2",
+    "score": 2.537
+   },
+   {
+    "waku": 4,
+    "name": "山下大輝",
+    "grade": "A1",
+    "score": 3.855
+   },
+   {
+    "waku": 5,
+    "name": "武田信一",
+    "grade": "B1",
+    "score": 1.703
+   },
+   {
+    "waku": 6,
+    "name": "安東幸治",
+    "grade": "A2",
+    "score": 2.003
+   }
+  ],
+  "timestamp": "2026-05-30T18:51:07.603404"
+ }
+]
