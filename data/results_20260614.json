@@ -1,0 +1,33 @@
+{
+  "date": "20260614",
+  "total_races": 2,
+  "hits": 1,
+  "total_bet": 1500,
+  "total_payout": 1140,
+  "roi": 76.0,
+  "look_count": 1,
+  "results": [
+    {
+      "venue": "下関",
+      "race_no": 2,
+      "actual": "2-1-4",
+      "kimarite": "差し",
+      "payout_odds": 1140,
+      "hit": true,
+      "bet_amount": 700,
+      "win_amount": 1140,
+      "race_type": "本命崩れ"
+    },
+    {
+      "venue": "住之江",
+      "race_no": 7,
+      "actual": "2-4-3",
+      "kimarite": "まくり",
+      "payout_odds": 7290,
+      "hit": false,
+      "bet_amount": 800,
+      "win_amount": 0,
+      "race_type": "本命崩れ"
+    }
+  ]
+}
