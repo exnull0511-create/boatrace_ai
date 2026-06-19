@@ -1,0 +1,66 @@
+{
+  "date": "20260619",
+  "total_races": 5,
+  "hits": 0,
+  "total_bet": 3700,
+  "total_payout": 0,
+  "roi": 0.0,
+  "look_count": 0,
+  "results": [
+    {
+      "venue": "津",
+      "race_no": 2,
+      "actual": "2-3-5",
+      "kimarite": "抜き",
+      "payout_odds": 8980,
+      "hit": false,
+      "bet_amount": 700,
+      "win_amount": 0,
+      "race_type": "本命崩れ"
+    },
+    {
+      "venue": "戸田",
+      "race_no": 2,
+      "actual": "2-6-3",
+      "kimarite": "まくり",
+      "payout_odds": 7560,
+      "hit": false,
+      "bet_amount": 800,
+      "win_amount": 0,
+      "race_type": "本命崩れ"
+    },
+    {
+      "venue": "宮島",
+      "race_no": 3,
+      "actual": "2-4-5",
+      "kimarite": "差し",
+      "payout_odds": 1200,
+      "hit": false,
+      "bet_amount": 800,
+      "win_amount": 0,
+      "race_type": "本命崩れ"
+    },
+    {
+      "venue": "徳山",
+      "race_no": 8,
+      "actual": "0-0-0",
+      "kimarite": "",
+      "payout_odds": 0,
+      "hit": false,
+      "bet_amount": 700,
+      "win_amount": 0,
+      "race_type": "本命崩れ"
+    },
+    {
+      "venue": "戸田",
+      "race_no": 4,
+      "actual": "0-0-0",
+      "kimarite": "",
+      "payout_odds": 0,
+      "hit": false,
+      "bet_amount": 700,
+      "win_amount": 0,
+      "race_type": "本命崩れ"
+    }
+  ]
+}
