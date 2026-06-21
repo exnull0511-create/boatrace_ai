@@ -1,8 +1,8 @@
 {
   "date": "20260621",
-  "total_races": 5,
+  "total_races": 6,
   "hits": 0,
-  "total_bet": 3600,
+  "total_bet": 4300,
   "total_payout": 0,
   "roi": 0.0,
   "look_count": 0,
@@ -43,9 +43,9 @@
     {
       "venue": "常滑",
       "race_no": 4,
-      "actual": "0-0-0",
-      "kimarite": "",
-      "payout_odds": 0,
+      "actual": "3-2-4",
+      "kimarite": "まくり差し",
+      "payout_odds": 10830,
       "hit": false,
       "bet_amount": 700,
       "win_amount": 0,
@@ -54,13 +54,24 @@
     {
       "venue": "びわこ",
       "race_no": 4,
+      "actual": "1-4-6",
+      "kimarite": "逃げ",
+      "payout_odds": 12660,
+      "hit": false,
+      "bet_amount": 700,
+      "win_amount": 0,
+      "race_type": "本命崩れ"
+    },
+    {
+      "venue": "下関",
+      "race_no": 8,
       "actual": "0-0-0",
       "kimarite": "",
       "payout_odds": 0,
       "hit": false,
       "bet_amount": 700,
       "win_amount": 0,
-      "race_type": "本命崩れ"
+      "race_type": "通常"
     }
   ]
 }
