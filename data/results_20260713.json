@@ -1,0 +1,33 @@
+{
+  "date": "20260713",
+  "total_races": 2,
+  "hits": 0,
+  "total_bet": 1400,
+  "total_payout": 0,
+  "roi": 0.0,
+  "look_count": 1,
+  "results": [
+    {
+      "venue": "丸亀",
+      "race_no": 5,
+      "actual": "1-5-6",
+      "kimarite": "逃げ",
+      "payout_odds": 1700,
+      "hit": false,
+      "bet_amount": 700,
+      "win_amount": 0,
+      "race_type": "本命崩れ"
+    },
+    {
+      "venue": "下関",
+      "race_no": 1,
+      "actual": "5-3-6",
+      "kimarite": "まくり差し",
+      "payout_odds": 2820,
+      "hit": false,
+      "bet_amount": 700,
+      "win_amount": 0,
+      "race_type": "本命崩れ"
+    }
+  ]
+}
