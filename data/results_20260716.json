@@ -1,10 +1,10 @@
 {
   "date": "20260716",
-  "total_races": 5,
+  "total_races": 10,
   "hits": 1,
-  "total_bet": 3400,
+  "total_bet": 7000,
   "total_payout": 2990,
-  "roi": 87.94117647058823,
+  "roi": 42.714285714285715,
   "look_count": 0,
   "results": [
     {
@@ -54,11 +54,66 @@
     {
       "venue": "江戸川",
       "race_no": 4,
+      "actual": "2-4-3",
+      "kimarite": "まくり",
+      "payout_odds": 1640,
+      "hit": false,
+      "bet_amount": 600,
+      "win_amount": 0,
+      "race_type": "本命崩れ"
+    },
+    {
+      "venue": "桐生",
+      "race_no": 2,
+      "actual": "4-5-2",
+      "kimarite": "まくり",
+      "payout_odds": 2410,
+      "hit": false,
+      "bet_amount": 600,
+      "win_amount": 0,
+      "race_type": "本命崩れ"
+    },
+    {
+      "venue": "住之江",
+      "race_no": 3,
+      "actual": "4-1-2",
+      "kimarite": "まくり差し",
+      "payout_odds": 2340,
+      "hit": false,
+      "bet_amount": 700,
+      "win_amount": 0,
+      "race_type": "本命崩れ"
+    },
+    {
+      "venue": "住之江",
+      "race_no": 4,
+      "actual": "4-3-2",
+      "kimarite": "差し",
+      "payout_odds": 10230,
+      "hit": false,
+      "bet_amount": 800,
+      "win_amount": 0,
+      "race_type": "混戦"
+    },
+    {
+      "venue": "桐生",
+      "race_no": 5,
+      "actual": "4-6-3",
+      "kimarite": "まくり差し",
+      "payout_odds": 3980,
+      "hit": false,
+      "bet_amount": 800,
+      "win_amount": 0,
+      "race_type": "通常"
+    },
+    {
+      "venue": "住之江",
+      "race_no": 6,
       "actual": "0-0-0",
       "kimarite": "",
       "payout_odds": 0,
       "hit": false,
-      "bet_amount": 600,
+      "bet_amount": 700,
       "win_amount": 0,
       "race_type": "本命崩れ"
     }
