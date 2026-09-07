@@ -1,10 +1,10 @@
 {
   "date": "20260907",
-  "total_races": 5,
+  "total_races": 6,
   "hits": 2,
-  "total_bet": 3600,
+  "total_bet": 4300,
   "total_payout": 12120,
-  "roi": 336.6666666666667,
+  "roi": 281.8604651162791,
   "look_count": 0,
   "results": [
     {
@@ -54,11 +54,22 @@
     {
       "venue": "福岡",
       "race_no": 4,
+      "actual": "4-2-1",
+      "kimarite": "まくり",
+      "payout_odds": 1790,
+      "hit": false,
+      "bet_amount": 600,
+      "win_amount": 0,
+      "race_type": "本命崩れ"
+    },
+    {
+      "venue": "大村",
+      "race_no": 8,
       "actual": "0-0-0",
       "kimarite": "",
       "payout_odds": 0,
       "hit": false,
-      "bet_amount": 600,
+      "bet_amount": 700,
       "win_amount": 0,
       "race_type": "本命崩れ"
     }
