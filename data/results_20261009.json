@@ -1,10 +1,10 @@
 {
   "date": "20261009",
   "total_races": 5,
-  "hits": 0,
+  "hits": 1,
   "total_bet": 3800,
-  "total_payout": 0,
-  "roi": 0.0,
+  "total_payout": 2270,
+  "roi": 59.73684210526316,
   "look_count": 0,
   "results": [
     {
@@ -54,12 +54,12 @@
     {
       "venue": "江戸川",
       "race_no": 6,
-      "actual": "0-0-0",
-      "kimarite": "",
-      "payout_odds": 0,
-      "hit": false,
+      "actual": "1-2-5",
+      "kimarite": "逃げ",
+      "payout_odds": 2270,
+      "hit": true,
       "bet_amount": 600,
-      "win_amount": 0,
+      "win_amount": 2270,
       "race_type": "本命崩れ"
     }
   ]
