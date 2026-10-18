@@ -1,8 +1,8 @@
 {
   "date": "20261018",
-  "total_races": 5,
+  "total_races": 7,
   "hits": 0,
-  "total_bet": 3800,
+  "total_bet": 5200,
   "total_payout": 0,
   "roi": 0.0,
   "look_count": 0,
@@ -54,6 +54,28 @@
     {
       "venue": "三国",
       "race_no": 9,
+      "actual": "4-1-6",
+      "kimarite": "まくり",
+      "payout_odds": 2500,
+      "hit": false,
+      "bet_amount": 700,
+      "win_amount": 0,
+      "race_type": "本命崩れ"
+    },
+    {
+      "venue": "下関",
+      "race_no": 2,
+      "actual": "1-2-4",
+      "kimarite": "逃げ",
+      "payout_odds": 1530,
+      "hit": false,
+      "bet_amount": 700,
+      "win_amount": 0,
+      "race_type": "混戦"
+    },
+    {
+      "venue": "下関",
+      "race_no": 4,
       "actual": "0-0-0",
       "kimarite": "",
       "payout_odds": 0,
