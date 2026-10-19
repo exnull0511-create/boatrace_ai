@@ -1,8 +1,8 @@
 {
   "date": "20261019",
-  "total_races": 5,
+  "total_races": 7,
   "hits": 0,
-  "total_bet": 3500,
+  "total_bet": 4800,
   "total_payout": 0,
   "roi": 0.0,
   "look_count": 0,
@@ -54,11 +54,33 @@
     {
       "venue": "江戸川",
       "race_no": 5,
+      "actual": "2-4-1",
+      "kimarite": "まくり",
+      "payout_odds": 650,
+      "hit": false,
+      "bet_amount": 600,
+      "win_amount": 0,
+      "race_type": "本命崩れ"
+    },
+    {
+      "venue": "下関",
+      "race_no": 4,
+      "actual": "3-5-4",
+      "kimarite": "まくり",
+      "payout_odds": 1730,
+      "hit": false,
+      "bet_amount": 600,
+      "win_amount": 0,
+      "race_type": "本命崩れ"
+    },
+    {
+      "venue": "下関",
+      "race_no": 6,
       "actual": "0-0-0",
       "kimarite": "",
       "payout_odds": 0,
       "hit": false,
-      "bet_amount": 600,
+      "bet_amount": 700,
       "win_amount": 0,
       "race_type": "本命崩れ"
     }
