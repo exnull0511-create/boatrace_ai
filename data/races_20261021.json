@@ -1,0 +1,552 @@
+[
+ {
+  "place_no": 11,
+  "venue": "びわこ",
+  "race_no": 1,
+  "deadline": "10:28",
+  "race_type": "本命崩れ",
+  "is_look": false,
+  "look_reason": "",
+  "score_gap": 0.164,
+  "tenkai_max": 0.4,
+  "agreement": -0.08,
+  "bets": [
+   {
+    "combo": "1-3-4",
+    "odds": 48.8,
+    "prob": 0.021984481163822494,
+    "ev": 1.0728,
+    "amount": 200
+   },
+   {
+    "combo": "1-2-4",
+    "odds": 27.3,
+    "prob": 0.021981653493451846,
+    "ev": 0.6001,
+    "amount": 200
+   },
+   {
+    "combo": "1-3-6",
+    "odds": 39.6,
+    "prob": 0.021950961481968748,
+    "ev": 0.8693,
+    "amount": 200
+   },
+   {
+    "combo": "1-2-6",
+    "odds": 25.9,
+    "prob": 0.021948138122939817,
+    "ev": 0.5685,
+    "amount": 200
+   },
+   {
+    "combo": "1-2-3",
+    "odds": 19.5,
+    "prob": 0.02095021247342408,
+    "ev": 0.4085,
+    "amount": 100
+   }
+  ],
+  "top5_prob": [
+   {
+    "combo": "1-5-4",
+    "prob": 0.01529
+   },
+   {
+    "combo": "3-5-4",
+    "prob": 0.00793
+   },
+   {
+    "combo": "1-5-2",
+    "prob": 0.01326
+   },
+   {
+    "combo": "5-1-4",
+    "prob": 0.00711
+   },
+   {
+    "combo": "1-4-5",
+    "prob": 0.0158
+   }
+  ],
+  "racers": [
+   {
+    "waku": 1,
+    "name": "草川壮良",
+    "grade": "B1",
+    "score": 1.971
+   },
+   {
+    "waku": 2,
+    "name": "浦田晃嗣",
+    "grade": "B1",
+    "score": 1.198
+   },
+   {
+    "waku": 3,
+    "name": "森下勇",
+    "grade": "B1",
+    "score": 1.62
+   },
+   {
+    "waku": 4,
+    "name": "田代達也",
+    "grade": "B1",
+    "score": 1.895
+   },
+   {
+    "waku": 5,
+    "name": "河上年昭",
+    "grade": "B1",
+    "score": 1.661
+   },
+   {
+    "waku": 6,
+    "name": "深川麻奈美",
+    "grade": "B1",
+    "score": 2.135
+   }
+  ],
+  "timestamp": "2026-10-21T10:21:07.612775"
+ },
+ {
+  "place_no": 3,
+  "venue": "江戸川",
+  "race_no": 2,
+  "deadline": "11:41",
+  "race_type": "本命崩れ",
+  "is_look": false,
+  "look_reason": "",
+  "score_gap": 0.013,
+  "tenkai_max": 0.308,
+  "agreement": 0.033,
+  "bets": [
+   {
+    "combo": "2-1-6",
+    "odds": 0,
+    "prob": 0.022893732201147893,
+    "ev": 0,
+    "amount": 200
+   },
+   {
+    "combo": "1-2-6",
+    "odds": 0,
+    "prob": 0.022822840770217262,
+    "ev": 0,
+    "amount": 200
+   },
+   {
+    "combo": "1-3-6",
+    "odds": 0,
+    "prob": 0.022091603808726358,
+    "ev": 0,
+    "amount": 200
+   },
+   {
+    "combo": "2-1-4",
+    "odds": 0,
+    "prob": 0.020550764270936776,
+    "ev": 0,
+    "amount": 100
+   },
+   {
+    "combo": "1-2-4",
+    "odds": 0,
+    "prob": 0.02048712794143469,
+    "ev": 0,
+    "amount": 100
+   }
+  ],
+  "top5_prob": [
+   {
+    "combo": "2-1-6",
+    "prob": 0.02289
+   },
+   {
+    "combo": "1-2-6",
+    "prob": 0.02282
+   },
+   {
+    "combo": "1-3-6",
+    "prob": 0.02209
+   },
+   {
+    "combo": "2-1-4",
+    "prob": 0.02055
+   },
+   {
+    "combo": "1-2-4",
+    "prob": 0.02049
+   }
+  ],
+  "racers": [
+   {
+    "waku": 1,
+    "name": "藤原孝斗",
+    "grade": "B1",
+    "score": 2.57
+   },
+   {
+    "waku": 2,
+    "name": "向井田直弥",
+    "grade": "B2",
+    "score": 1.456
+   },
+   {
+    "waku": 3,
+    "name": "渡辺空依",
+    "grade": "B1",
+    "score": 1.78
+   },
+   {
+    "waku": 4,
+    "name": "竹田吉行",
+    "grade": "A2",
+    "score": 1.978
+   },
+   {
+    "waku": 5,
+    "name": "佐藤大騎",
+    "grade": "B1",
+    "score": 1.365
+   },
+   {
+    "waku": 6,
+    "name": "田路朋史",
+    "grade": "A2",
+    "score": 2.583
+   }
+  ],
+  "timestamp": "2026-10-21T11:34:07.330805"
+ },
+ {
+  "place_no": 3,
+  "venue": "江戸川",
+  "race_no": 3,
+  "deadline": "12:08",
+  "race_type": "本命崩れ",
+  "is_look": false,
+  "look_reason": "",
+  "score_gap": 0.576,
+  "tenkai_max": 0.355,
+  "agreement": -0.264,
+  "bets": [
+   {
+    "combo": "1-3-5",
+    "odds": 0,
+    "prob": 0.0201610364175807,
+    "ev": 0,
+    "amount": 200
+   },
+   {
+    "combo": "1-2-5",
+    "odds": 0,
+    "prob": 0.019415708134751457,
+    "ev": 0,
+    "amount": 200
+   },
+   {
+    "combo": "1-3-4",
+    "odds": 0,
+    "prob": 0.017579064158852378,
+    "ev": 0,
+    "amount": 100
+   },
+   {
+    "combo": "1-5-4",
+    "odds": 0,
+    "prob": 0.017267745639863222,
+    "ev": 0,
+    "amount": 100
+   },
+   {
+    "combo": "1-2-4",
+    "odds": 0,
+    "prob": 0.016929188158834978,
+    "ev": 0,
+    "amount": 100
+   }
+  ],
+  "top5_prob": [
+   {
+    "combo": "1-3-5",
+    "prob": 0.02016
+   },
+   {
+    "combo": "1-2-5",
+    "prob": 0.01942
+   },
+   {
+    "combo": "1-3-4",
+    "prob": 0.01758
+   },
+   {
+    "combo": "1-5-4",
+    "prob": 0.01727
+   },
+   {
+    "combo": "1-2-4",
+    "prob": 0.01693
+   }
+  ],
+  "racers": [
+   {
+    "waku": 1,
+    "name": "河内一馬",
+    "grade": "B1",
+    "score": 1.687
+   },
+   {
+    "waku": 2,
+    "name": "芝田京介",
+    "grade": "B2",
+    "score": 1.165
+   },
+   {
+    "waku": 3,
+    "name": "山本景士郎",
+    "grade": "B1",
+    "score": 1.71
+   },
+   {
+    "waku": 4,
+    "name": "桑原将光",
+    "grade": "A2",
+    "score": 2.026
+   },
+   {
+    "waku": 5,
+    "name": "是澤孝宏",
+    "grade": "A2",
+    "score": 2.602
+   },
+   {
+    "waku": 6,
+    "name": "秋田健太郎",
+    "grade": "B1",
+    "score": 1.708
+   }
+  ],
+  "timestamp": "2026-10-21T12:01:07.307883"
+ },
+ {
+  "place_no": 3,
+  "venue": "江戸川",
+  "race_no": 5,
+  "deadline": "13:02",
+  "race_type": "本命崩れ",
+  "is_look": false,
+  "look_reason": "",
+  "score_gap": 0.019,
+  "tenkai_max": 0.317,
+  "agreement": -0.267,
+  "bets": [
+   {
+    "combo": "1-3-6",
+    "odds": 0,
+    "prob": 0.020783651294311044,
+    "ev": 0,
+    "amount": 200
+   },
+   {
+    "combo": "1-3-5",
+    "odds": 0,
+    "prob": 0.020555411447888285,
+    "ev": 0,
+    "amount": 200
+   },
+   {
+    "combo": "1-2-3",
+    "odds": 0,
+    "prob": 0.016957883172253066,
+    "ev": 0,
+    "amount": 100
+   },
+   {
+    "combo": "3-1-6",
+    "odds": 0,
+    "prob": 0.0165413160339285,
+    "ev": 0,
+    "amount": 100
+   },
+   {
+    "combo": "1-3-4",
+    "odds": 0,
+    "prob": 0.016466833106313472,
+    "ev": 0,
+    "amount": 100
+   }
+  ],
+  "top5_prob": [
+   {
+    "combo": "1-3-6",
+    "prob": 0.02078
+   },
+   {
+    "combo": "1-3-5",
+    "prob": 0.02056
+   },
+   {
+    "combo": "1-2-3",
+    "prob": 0.01696
+   },
+   {
+    "combo": "3-1-6",
+    "prob": 0.01654
+   },
+   {
+    "combo": "1-3-4",
+    "prob": 0.01647
+   }
+  ],
+  "racers": [
+   {
+    "waku": 1,
+    "name": "宮内直哉",
+    "grade": "B1",
+    "score": 1.499
+   },
+   {
+    "waku": 2,
+    "name": "渥美卓郎",
+    "grade": "B1",
+    "score": 0.962
+   },
+   {
+    "waku": 3,
+    "name": "大崎翔",
+    "grade": "A2",
+    "score": 2.248
+   },
+   {
+    "waku": 4,
+    "name": "花本夏樹",
+    "grade": "B1",
+    "score": 1.207
+   },
+   {
+    "waku": 5,
+    "name": "酒井俊弘",
+    "grade": "B1",
+    "score": 2.066
+   },
+   {
+    "waku": 6,
+    "name": "江夏満",
+    "grade": "A1",
+    "score": 2.229
+   }
+  ],
+  "timestamp": "2026-10-21T12:55:07.368426"
+ },
+ {
+  "place_no": 3,
+  "venue": "江戸川",
+  "race_no": 6,
+  "deadline": "13:29",
+  "race_type": "本命崩れ",
+  "is_look": false,
+  "look_reason": "",
+  "score_gap": 0.881,
+  "tenkai_max": 0.287,
+  "agreement": -0.005,
+  "bets": [
+   {
+    "combo": "2-1-3",
+    "odds": 0,
+    "prob": 0.030271002878902237,
+    "ev": 0,
+    "amount": 200
+   },
+   {
+    "combo": "2-1-4",
+    "odds": 0,
+    "prob": 0.027761610211207582,
+    "ev": 0,
+    "amount": 200
+   },
+   {
+    "combo": "2-1-5",
+    "odds": 0,
+    "prob": 0.026492663155749267,
+    "ev": 0,
+    "amount": 200
+   },
+   {
+    "combo": "2-1-6",
+    "odds": 0,
+    "prob": 0.024933599657913978,
+    "ev": 0,
+    "amount": 100
+   },
+   {
+    "combo": "1-2-3",
+    "odds": 0,
+    "prob": 0.02142728322267916,
+    "ev": 0,
+    "amount": 100
+   }
+  ],
+  "top5_prob": [
+   {
+    "combo": "2-1-3",
+    "prob": 0.03027
+   },
+   {
+    "combo": "2-1-4",
+    "prob": 0.02776
+   },
+   {
+    "combo": "2-1-5",
+    "prob": 0.02649
+   },
+   {
+    "combo": "2-1-6",
+    "prob": 0.02493
+   },
+   {
+    "combo": "1-2-3",
+    "prob": 0.02143
+   }
+  ],
+  "racers": [
+   {
+    "waku": 1,
+    "name": "高山弘斗",
+    "grade": "B1",
+    "score": 1.377
+   },
+   {
+    "waku": 2,
+    "name": "荒井翔伍",
+    "grade": "A2",
+    "score": 2.981
+   },
+   {
+    "waku": 3,
+    "name": "向井田直弥",
+    "grade": "B2",
+    "score": 2.1
+   },
+   {
+    "waku": 4,
+    "name": "尾道佳諭",
+    "grade": "B1",
+    "score": 1.925
+   },
+   {
+    "waku": 5,
+    "name": "伏島祐介",
+    "grade": "B1",
+    "score": 1.889
+   },
+   {
+    "waku": 6,
+    "name": "横井健太",
+    "grade": "B1",
+    "score": 1.813
+   }
+  ],
+  "timestamp": "2026-10-21T13:22:07.334554"
+ }
+]
