@@ -1,8 +1,8 @@
 {
   "date": "20261028",
-  "total_races": 5,
+  "total_races": 6,
   "hits": 0,
-  "total_bet": 3600,
+  "total_bet": 4400,
   "total_payout": 0,
   "roi": 0.0,
   "look_count": 0,
@@ -59,6 +59,17 @@
       "payout_odds": 0,
       "hit": false,
       "bet_amount": 700,
+      "win_amount": 0,
+      "race_type": "本命崩れ"
+    },
+    {
+      "venue": "桐生",
+      "race_no": 10,
+      "actual": "0-0-0",
+      "kimarite": "",
+      "payout_odds": 0,
+      "hit": false,
+      "bet_amount": 800,
       "win_amount": 0,
       "race_type": "本命崩れ"
     }
